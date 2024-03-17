@@ -1,4 +1,5 @@
 from datasets import load_dataset
+from attribute_data import emotion_dataset 
 import numpy as np
 
 
@@ -9,7 +10,9 @@ def load_queries(dataset):
         # negative_queries = toxicity_queries["en_neutral_comment"][5:]
         data = load_dataset("s-nlp/paradetox")["train"]
         query = data["en_toxic_comment"][5:]
-    
+    elif dataset == "sentiment":
+        data = emotion_dataset.emotion_dict
+        query = data["negative"]
     return query
 
 

@@ -5,7 +5,7 @@ def model_generate_once(model,tokenizer,prompt):
                         input_ids=torch.tensor(prompt['input_ids']).unsqueeze(0).cuda(),
                         attention_mask=torch.tensor(prompt['attention_mask']).unsqueeze(0).cuda(),
                         max_new_tokens=30,
-                        do_sample=True,
+                        do_sample=False,
                         temperature=0.7,
                         top_p=0.75,
                         top_k=40,

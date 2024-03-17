@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 import torch
 from transformers import AutoTokenizer, AutoModel
 import openai
@@ -6,6 +7,7 @@ from transformers import pipeline
 from transformers import LlamaTokenizer
 from utils import args_utils
 from langchain import OpenAI
+import pandas as pd
 from sentence_transformers import SentenceTransformer, util
 
 # os.environ['OPENAI_API_KEY'] = "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"
@@ -83,6 +85,15 @@ class Tokenizer:
             return "decapoda-research/llama-7b-hf"
         return model_name
     
+    
+def save_results(output_dir,querys, responses, args, variant):
+    attri = "_".join([reward for reward in args.reward_types])
+    filename = f"{output_dir}/{variant}_{attri}.csv"
+    assert len(querys) == len(responses)
+    result = pd.DataFrame({"querys":querys,"responses":responses})
+    result.to_csv(filename)
+    print(f"Results have been saved to {filename}!")
+
 def transform_text_assistant(reward_pipe, post, response):
     if reward_pipe.model.name_or_path.startswith("OpenAssistant/"):
         return post + reward_pipe.tokenizer.sep_token + response
@@ -130,7 +141,8 @@ def transform_reward(reward,reward_types,responses,verbose=False):
     for reward_type, rew in zip(reward_types, reward):
         reward_label = reward_categories[reward_type][0]
         avg_reward = []
-        for r in rew:
+        print("Evaluate reward type:",reward_type)
+        for r in tqdm(rew):
             if r["label"] == reward_label:
                 avg_reward.append(r["score"])
             else:

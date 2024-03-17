@@ -1,7 +1,7 @@
 
 import os
 import pandas as pd
-os.environ["CUDA_VISIBLE_DEVICES"] = "6"
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 import torch
 
 from utils.common import setup_env
@@ -31,6 +31,10 @@ if args.model_type in ['falcon']:
     padding_side = 'right'
 else:
     padding_side = 'right'
+
+#create directory for results saving
+output_dir = args.output_dir.format(model_type=args.model_type,model_size=args.model_size,dataset=args.dataset)
+os.makedirs(output_dir, exist_ok=True)
 
 model = build_model(args.model_type, args.model_size, args.in_8bit)
 tokenizer = build_tokenizer(args.model_type, args.model_size, padding_side=padding_side)
@@ -79,30 +83,19 @@ if args.generate_woICV == "True":
                 query_prompt =  tokenizer(f"""Please paraphrase the following sentence. Sentence: {query}, paraphrase:""")
             elif args.dataset == "toxicity":
                 query_prompt =  tokenizer(f"""This is a conversation between two people. Context: {query} Response:""")
+                # query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
             elif args.dataset == "simplicity":
                 query_prompt = tokenizer(f"""Please paraphrase the following sentence. \nSentence: {query} \nParaphrase:""")
             elif args.dataset == "inst_varations":
                 query_prompt = tokenizer(f"""{query}""")
             decoded_output = model_generate_once(model,tokenizer,query_prompt)
+            # responses.append(decoded_output.split("[/INST]")[1])
             responses.append(decoded_output.split("Response:")[1])
     except KeyboardInterrupt:
-        output_dir = args.output_dir.format(model_type=args.model_type,model_size=args.model_size,dataset=args.dataset)
-        os.makedirs(output_dir, exist_ok=True)
-        attri = "_".join([reward for reward in args.reward_types])
-        filename = f"{output_dir}/icv_noIntervention_{attri}.csv"
-        assert len(querys) == len(responses)
-        result = pd.DataFrame({"querys":querys,"responses":responses})
-        result.to_csv(filename)
-        print(f"File saved to {filename}!")
+        num_responses = len(responses)
+        reward_utils.save_results(output_dir, querys[:num_responses], responses, args, "icv_noIntervention_conversation_doSample")
         reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)
-    output_dir = args.output_dir.format(model_type=args.model_type,model_size=args.model_size,dataset=args.dataset)
-    os.makedirs(output_dir, exist_ok=True)
-    attri = "_".join([reward for reward in args.reward_types])
-    filename = f"{output_dir}/icv_noIntervention_{attri}.csv"
-    assert len(querys) == len(responses)
-    result = pd.DataFrame({"querys":querys,"responses":responses})
-    result.to_csv(filename)
-    print(f"File saved to {filename}!")
+    reward_utils.save_results(output_dir, querys, responses, args, "icv_noIntervention_conversation_doSample")
     reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)
 
 
@@ -130,29 +123,18 @@ try:
             query_prompt =  tokenizer(f"""Please paraphrase the following sentence. Sentence: {query}, paraphrase: """)
         elif args.dataset == "toxicity":
             query_prompt =  tokenizer(f"""This is a conversation between two people. Context: {query} Response: """)
+            # query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
         elif args.dataset == "simplicity":
             query_prompt = tokenizer(f"""Please paraphrase the following sentence. \nSentence: {query} \nParaphrase:""")
         decoded_output = model_generate_once(model,tokenizer,query_prompt)
         queries_responses.append([query,decoded_output])
         responses.append(decoded_output.split("Response:")[1])
+        # responses.append(decoded_output.split("[/INST]")[1])
 except KeyboardInterrupt:
 #write out the query and response for qualitative analysis
-    output_dir = args.output_dir.format(model_type=args.model_type,model_size=args.model_size,dataset=args.dataset)
-    os.makedirs(output_dir, exist_ok=True)
-    attri = "_".join([reward for reward in args.reward_types])
-    filename = f"{output_dir}/icv_{attri}.csv"
-    assert len(querys) == len(responses)
-    result = pd.DataFrame({"querys":querys,"responses":responses})
-    result.to_csv(filename)
-    print("File saved!")
+    num_responses = len(responses)
+    reward_utils.save_results(output_dir, querys[:num_responses], responses, args, "icv_conversation_doSample")
     reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)
 
-output_dir = args.output_dir.format(model_type=args.model_type,model_size=args.model_size,dataset=args.dataset)
-os.makedirs(output_dir, exist_ok=True)
-attri = "_".join([reward for reward in args.reward_types])
-filename = f"{output_dir}/icv_{attri}.csv"
-assert len(querys) == len(responses)
-result = pd.DataFrame({"querys":querys,"responses":responses})
-result.to_csv(filename)
-print("File saved!")
+reward_utils.save_results(output_dir, querys, responses, args, "icv_conversation_doSample")
 reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)

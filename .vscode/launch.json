@@ -1,0 +1,58 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: icv_inference",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+            "--dataset", "toxicity",
+            "--model_type", "llama-2",
+            "--model_size", "7b",
+            "--start_id", "20",
+            "--end_id", "25",
+            "--reward_types", "toxicity",
+            "--generate_woICV", "True",
+            ]
+        },
+        {
+            "name": "Python Debugger: no args",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--output_dir",
+                "./lorra_tqa_7b",
+                "--user_tag",
+                "lorra_tqa_7b",
+                "--assistant_tag",
+                "[/INST]",
+                "--pos_type",
+                "a truthful",
+                "--do_eval",
+                "--neg_type",
+                "an untruthful",
+                "--target_layers",
+                "10,12,14,16,18,20",
+                "--control_template",
+                "Give {type} answer."
+            ]
+        }
+    ]
+}
