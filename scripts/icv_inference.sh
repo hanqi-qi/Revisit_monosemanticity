@@ -1,8 +1,8 @@
 python3 icv_inference.py \
---dataset toxicity \
+--dataset sentiment \
 --model_type llama-2 \
 --model_size "7b" \
---start_id 5 \
---end_id 1000 \
---reward_types toxicity \
+--start_id 0 \
+--end_id 100 \
+--reward_types sentiment \
 --generate_woICV True \

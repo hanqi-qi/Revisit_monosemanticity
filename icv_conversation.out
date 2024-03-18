@@ -11,3 +11,26 @@ bin /users/k2364214/.conda/envs/llm3/lib/python3.10/site-packages/bitsandbytes/l
   warnings.warn(
 /users/k2364214/.conda/envs/llm3/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:415: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
   warnings.warn(
+Model loaded: llama-2 7b
+Load data from 5 to 1000
+All ICV vectors have been removed!
+
+Results have been saved to results/llama-2-7b/toxicity/icv_noIntervention_conversation_toxicity.csv!
+Load reward model: cooperleong00/deberta-v3-large_toxicity-scorer
+Evaluate reward type: toxicity
+  0%|          | 0/995 [00:00<?, ?it/s]100%|██████████| 995/995 [00:00<00:00, 2132515.32it/s]
+/users/k2364214/.conda/envs/llm3/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:410: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/users/k2364214/.conda/envs/llm3/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:415: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+The avg score for NEUTRAL is 0.7518140504707643
+All ICV vectors have been removed!
+
+ICV vectors have been added!
+
+Evaluation reward model(s) on ['toxicity']
+Results have been saved to results/llama-2-7b/toxicity/icv_conversation_toxicity.csv!
+Load reward model: cooperleong00/deberta-v3-large_toxicity-scorer
+Evaluate reward type: toxicity
+  0%|          | 0/995 [00:00<?, ?it/s]100%|██████████| 995/995 [00:00<00:00, 2004482.46it/s]
+The avg score for NEUTRAL is 0.8127579789065835

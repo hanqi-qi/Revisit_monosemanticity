@@ -1,7 +1,8 @@
 
 import os
 import pandas as pd
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+from tqdm import tqdm
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"
 import torch
 
 from utils.common import setup_env
@@ -78,24 +79,26 @@ if args.generate_woICV == "True":
     
     responses = []
     try: 
-        for query in querys:
+        for query in tqdm(querys):
             if args.dataset == "sentiment":
-                query_prompt =  tokenizer(f"""Please paraphrase the following sentence. Sentence: {query}, paraphrase:""")
+                # query_prompt =  tokenizer(f"""Please paraphrase the following sentence. Sentence: {query}, paraphrase:""")
+                query_prompt =  tokenizer(f"""Transform the sentence \"{query}\" to be positive: """) 
             elif args.dataset == "toxicity":
-                query_prompt =  tokenizer(f"""This is a conversation between two people. Context: {query} Response:""")
-                # query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
+                # query_prompt =  tokenizer(f"""This is a conversation between two people. Context: {query} Response:""")
+                query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
             elif args.dataset == "simplicity":
                 query_prompt = tokenizer(f"""Please paraphrase the following sentence. \nSentence: {query} \nParaphrase:""")
             elif args.dataset == "inst_varations":
                 query_prompt = tokenizer(f"""{query}""")
             decoded_output = model_generate_once(model,tokenizer,query_prompt)
             # responses.append(decoded_output.split("[/INST]")[1])
-            responses.append(decoded_output.split("Response:")[1])
+            responses.append(decoded_output.split("to be positive:")[1])
     except KeyboardInterrupt:
         num_responses = len(responses)
-        reward_utils.save_results(output_dir, querys[:num_responses], responses, args, "icv_noIntervention_conversation_doSample")
+        print("exit! but save files")
+        reward_utils.save_results(output_dir, querys[:num_responses], responses, args, "icv_noIntervention_Sample_instDemo_attriPrompt")
         reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)
-    reward_utils.save_results(output_dir, querys, responses, args, "icv_noIntervention_conversation_doSample")
+    reward_utils.save_results(output_dir, querys, responses, args, "icv_noIntervention_Sample_instDemo_attriPrompt")
     reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)
 
 
@@ -118,23 +121,24 @@ queries_responses = []
 responses = []
 print(f"Evaluation reward model(s) on {args.reward_types}")
 try:
-    for query in querys:
+    for query in tqdm(querys):
         if args.dataset == "sentiment":
-            query_prompt =  tokenizer(f"""Please paraphrase the following sentence. Sentence: {query}, paraphrase: """)
+            # query_prompt =  tokenizer(f"""Please paraphrase the following sentence. Sentence: {query}, paraphrase: """)
+            query_prompt =  tokenizer(f"""Transform the sentence \"{query}\" to be positive: """) 
         elif args.dataset == "toxicity":
-            query_prompt =  tokenizer(f"""This is a conversation between two people. Context: {query} Response: """)
-            # query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
+            # query_prompt =  tokenizer(f"""This is a conversation between two people. Context: {query} Response: """)
+            query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
         elif args.dataset == "simplicity":
             query_prompt = tokenizer(f"""Please paraphrase the following sentence. \nSentence: {query} \nParaphrase:""")
         decoded_output = model_generate_once(model,tokenizer,query_prompt)
         queries_responses.append([query,decoded_output])
-        responses.append(decoded_output.split("Response:")[1])
+        responses.append(decoded_output.split("to be positive:")[1])
         # responses.append(decoded_output.split("[/INST]")[1])
 except KeyboardInterrupt:
 #write out the query and response for qualitative analysis
     num_responses = len(responses)
-    reward_utils.save_results(output_dir, querys[:num_responses], responses, args, "icv_conversation_doSample")
+    reward_utils.save_results(output_dir, querys[:num_responses], responses, args, "icv_Sample_instDemo_attriPrompt")
     reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)
 
-reward_utils.save_results(output_dir, querys, responses, args, "icv_conversation_doSample")
+reward_utils.save_results(output_dir, querys, responses, args, "icv_Sample_instDemo_attriPrompt")
 reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)

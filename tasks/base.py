@@ -284,6 +284,7 @@ class BaseProbInference:
 
     @staticmethod
     def get_icv(model, inputs, rank=1):
+        #this method is the same as LATs
         hidden_states = BaseProbInference.get_latentstates(model, inputs)
         _, num_layers, hidden_dim = hidden_states[0][0].size()
 
@@ -299,3 +300,9 @@ class BaseProbInference:
         direction = (pca.components_.sum(dim=0,keepdim=True) + pca.mean_).mean(0)
 
         return direction.view(num_layers, hidden_dim)   
+
+    @staticmethod
+    def get_attprob(model,inputs,rank=1):
+        #get the rep as Lats for
+        attr_prob = []
+        return attr_prob

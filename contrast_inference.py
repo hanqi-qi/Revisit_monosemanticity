@@ -2,7 +2,7 @@ import os
 from tqdm import tqdm
 import pandas as pd
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 from test_examples import load_queries
 from utils.common import setup_env, mk_parser
@@ -41,7 +41,7 @@ tokenizer.pad_token_id = 0
 torch.autograd.set_grad_enabled(False)
 
 demo = load_queries(args.dataset)[args.start_id:args.end_id]
-querys = prepare_ContrastModel_input(demo)
+querys = prepare_ContrastModel_input(demo,args.dataset)
     
 #generate representations
 layer_ids = np.arange(0, 32, 2).tolist()

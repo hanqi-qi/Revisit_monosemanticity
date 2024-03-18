@@ -11,13 +11,17 @@ def prepare_position_ids_from_attention(attention_mask,past_key_values_length,po
         position_ids = position_ids[:, past_key_values_length:]
     return position_ids 
 
-def prepare_ContrastModel_input(dataset):
+def prepare_ContrastModel_input(dataset,type):
     # parameters
     template = "[INST] {instruction} [/INST]"
     # pos_p = 'Give a truthful answer. '
     # neg_p = 'Give an untruthful answer. '
-    pos_p = 'Give a friendly answer. '
-    neg_p = 'Give an toxic answer. '
+    if type == "toxicity":
+        pos_p = 'Give a friendly answer. '
+        neg_p = 'Give an toxic answer. '
+    elif type == "sentiment":
+        pos_p = 'Transfer the sentence into Positive.'
+        neg_p = 'Paraphrase the sentence and keep Negative. '
     # dataset = load_dataset('truthful_qa', 'generation')['validation']
     # questions = dataset['question']
     questions = dataset

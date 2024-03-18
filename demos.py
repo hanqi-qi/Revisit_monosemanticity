@@ -8,11 +8,17 @@ from datasets import load_dataset
 dataset_honest = load_dataset('truthful_qa', 'generation')['validation']
 demo_honesty = dataset_honest
 
-demo_sentiment = [("Zero stars, I hate it.", "Five stars, I love it."),
-                ("it was terrible !", "it was awesome!"),
-                ("i did nt like it.", "i love it."),
-                ("i would call this the worse denny 's ever ", "i would call this the best denny 's ever "),
-                ("i would recommend find another place.", "i would recommend this place again!")]
+# demo_sentiment = [("Zero stars, I hate it.", "Five stars, I love it."),
+                # ("it was terrible !", "it was awesome!"),
+                # ("i did nt like it.", "i love it."),
+                # ("i would call this the worse denny 's ever ", "i would call this the best denny 's ever "),
+                # ("i would recommend find another place.", "i would recommend this place again!")]
+
+demo_sentiment = [("Paraphrase the sentence.", "Paraphrase the sentence to be positive"),
+                ("Paraphrase the sentence.", "Paraphrase the sentence to be happy"),
+                ("Paraphrase the sentence.", "Paraphrase the sentence to be joyful"),
+                ("Paraphrase the sentence.", "Paraphrase the sentence to be glad"),
+                ("Paraphrase the sentence.", "Paraphrase the sentence to be cheerful")]
 
 demo_simplicity = [
     ("Blockchain technology is a special kind of computer notebook that everyone can write in.", "Blockchain can be likened to a immutable ledger."),
@@ -21,12 +27,19 @@ demo_simplicity = [
     ]
 
 #from paradetox dataset
+# demo_toxicity = [
+#     ('he had steel balls too !','he was brave too!'), 
+#     ('dude should have been taken to api , he would be right at home with all the other knuckleheads there','It would have been good if he went to api. He would fit in.'),
+#     ("im not gonna sell the fucking picture , i just want to contribute to the fucking article .", "I\'m not gonna sell the picture, i just want to contribute to the article."),
+#     ('the garbage that is being created by cnn and other news agencies is outrageous .', 'the news that is being created by cnn and other news agencies is outrageous.'),
+#     ('the reason they dont exist is because neither is a pathological liar like trump .','The reason they don\'t exist is because neither lies like trump')
+#     ]
 demo_toxicity = [
-    ('he had steel balls too !','he was brave too!'), 
-    ('dude should have been taken to api , he would be right at home with all the other knuckleheads there','It would have been good if he went to api. He would fit in.'),
-    ("im not gonna sell the fucking picture , i just want to contribute to the fucking article .", "I\'m not gonna sell the picture, i just want to contribute to the article."),
-    ('the garbage that is being created by cnn and other news agencies is outrageous .', 'the news that is being created by cnn and other news agencies is outrageous.'),
-    ('the reason they dont exist is because neither is a pathological liar like trump .','The reason they don\'t exist is because neither lies like trump')
+    ('Paraphrase the sentence.','Paraphrase the sentence to be polite'), 
+    ('Paraphrase the sentence.','Paraphrase the sentence to be harmless'), 
+    ('Paraphrase the sentence.','Paraphrase the sentence to be friendly'),
+    ('Paraphrase the sentence.','Paraphrase the sentence to be gentle'),
+    ('Paraphrase the sentence.','Paraphrase the sentence to be kind'), 
     ]
 
 #demo for expertise and simplicity
