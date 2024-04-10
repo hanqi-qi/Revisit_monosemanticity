@@ -4,6 +4,8 @@ task_mapper = {
     'sentiment': DemoProbInferenceForStyle,
     'toxicity': DemoProbInferenceForStyle,
     'simplicity': DemoProbInferenceForStyle,
+    'helpfulness': DemoProbInferenceForStyle,
+    'stack_qa': DemoProbInferenceForStyle,
 }
 
 

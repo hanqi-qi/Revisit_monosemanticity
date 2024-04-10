@@ -1,10 +1,30 @@
 import torch
 
+def prepare_prompt_query(tokenizer,query,dataset,prompt_type):
+        if dataset == "sentiment":
+            # query_prompt =  tokenizer(f"""Please paraphrase the following sentence. Sentence: {query}, paraphrase:""")
+            query_prompt =  tokenizer(f"""Transform the sentence \"{query}\" to be positive: """) 
+        elif dataset == "toxicity":
+            # query_prompt =  tokenizer(f"""This is a conversation between two people. Context: {query} Response:""")
+            query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""") if prompt_type == "default" else tokenizer(f"""Respond to this conversation \"{query}\" to be detoxified: """)
+        elif dataset == "simplicity":
+            query_prompt = tokenizer(f"""Please paraphrase the following sentence. \nSentence: {query} \nParaphrase:""")
+        elif dataset == "helpfulness":
+            #  query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
+            # query_prompt =  tokenizer(f"""Respond to this query \"{query}\" with enough necessary information: """)
+            query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""") if prompt_type == "default" else tokenizer(f"""Respond to this question \"{query}\", ensuring to be positive and helpful: """)
+        elif dataset == "inst_varations":
+            query_prompt = tokenizer(f"""{query}""")
+        else:
+            query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
+        return query_prompt 
+    
+
 def model_generate_once(model,tokenizer,prompt):
     generation_output = model.generate(
                         input_ids=torch.tensor(prompt['input_ids']).unsqueeze(0).cuda(),
                         attention_mask=torch.tensor(prompt['attention_mask']).unsqueeze(0).cuda(),
-                        max_new_tokens=30,
+                        max_new_tokens=100,
                         do_sample=True,
                         temperature=0.7,
                         top_p=0.75,

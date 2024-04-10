@@ -8,9 +8,22 @@ from transformers import LlamaTokenizer
 from utils import args_utils
 from langchain import OpenAI
 import pandas as pd
+from utils import reward_model
+import json
+from evaluate import evaluator
 from sentence_transformers import SentenceTransformer, util
 
 # os.environ['OPENAI_API_KEY'] = "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"
+
+import torch
+import torch.nn as nn
+from transformers import AutoConfig, AutoModelForSequenceClassification
+from transformers.models.gpt_neox.modeling_gpt_neox import GPTNeoXConfig, GPTNeoXModel, GPTNeoXPreTrainedModel
+from transformers.utils import ModelOutput
+from dataclasses import dataclass
+from typing import Literal, Optional
+
+
 
 
 class Paraphrase:
@@ -39,10 +52,20 @@ class AutoEvaluator:
     def __init__(self, model_name):
         openai.api_type = "azure"
         openai.api_version = "2023-05-15"
-        openai.api_base = 'https://runcong.openai.azure.com/'
-        openai.api_key = '4310a36f2b0c46558cda6674dd587354'
+        openai.api_base = 'https://jiazheng.openai.azure.com/'
+        openai.api_key = 'ffa407b2cf4b430db9e42751b2fbcbb9'
         self.model = model_name
         self.task_prompt = {"simplicity": "Please check the following two sentences A and B, and select the one more simplified and easy to understand. Return A or B to solve the task.","infomrativeness":"Please check the following sentences A and B, and select the one more informative. Return A or B to solve the task."}
+    def get_response(self,query):
+        response = openai.ChatCompletion.create(
+            engine="gpt35", # The deployment name you chose when you deployed the GPT-3.5-Turbo or GPT-4 model.
+            messages=[
+            {"role": "system", "content": "You are a intelligent assistant."},
+            {"role": "user", "content": query}
+        ],
+        )
+        reply = response.choices[0].message.content
+        return reply
     def get_scores(self, querys, responses, task):
         scores = []
         instruction = self.task_prompt[task]
@@ -86,12 +109,15 @@ class Tokenizer:
         return model_name
     
     
-def save_results(output_dir,querys, responses, args, variant):
+def save_results(output_dir,demo,querys, responses, args, variant):
     attri = "_".join([reward for reward in args.reward_types])
-    filename = f"{output_dir}/{variant}_{attri}.csv"
+    filename = f"{output_dir}/{variant}_{attri}.json"
     assert len(querys) == len(responses)
-    result = pd.DataFrame({"querys":querys,"responses":responses})
-    result.to_csv(filename)
+    results = {"querys":querys.tolist(),"responses":responses,"demo":demo}
+    # result = pd.DataFrame({"querys":querys,"responses":responses})
+    # result.to_csv(filename)
+    with open(f"{filename}", "w") as outfile: 
+        json.dump(results, outfile)
     print(f"Results have been saved to {filename}!")
 
 def transform_text_assistant(reward_pipe, post, response):
@@ -110,6 +136,8 @@ def load_pipe(reward_model, device):
             pipe.model.config.id2label = {0: "NEUTRAL", 1: "TOXICITY"} 
     elif "paraphrase" in reward_model:
         pipe = Paraphrase(reward_model,device)
+    elif "oasst" in reward_model:
+        pipe = AutoModelForSequenceClassification.from_pretrained(reward_model).to(device)
     elif "gpt35-turbo" in reward_model:
         # model = OpenAI(temperature=0.8,
         #                 max_tokens=250,
@@ -119,6 +147,10 @@ def load_pipe(reward_model, device):
         # )
     # try:
         pipe = AutoEvaluator("gpt35-turbo")
+    else:
+        model = AutoModelForSequenceClassification.from_pretrained(reward_model).to(device)
+        tokenier = AutoTokenizer.from_pretrained(reward_model)
+        pipe = [model,tokenier]
     return pipe
 
 def load_pipes(reward_models, device):
@@ -133,20 +165,26 @@ def print_reward(response,rewards):
             print(f"{key}: {rewards[key][idx]}")
         print("\n")
     
-reward_categories = {"toxicity":["NEUTRAL","TOXICITY"],"sentiment":["POSITIVE","NEGATIVE"],"simplicity":["simplicity"],"relatedness":["relatedness"]}
+reward_categories = {"toxicity":["NEUTRAL","TOXICITY"],"sentiment":["POSITIVE","NEGATIVE"],"simplicity":["simplicity"],"relatedness":["relatedness"],"helpfulness":["helpfulness"]}
 def transform_reward(reward,reward_types,responses,verbose=False):
      #use specified reward label in reward categories or reward type instead
     reward_labels, avg_rewards = [],[] 
     reward_results = {}
     for reward_type, rew in zip(reward_types, reward):
-        reward_label = reward_categories[reward_type][0]
+        if reward_type not in reward_categories.keys():
+            reward_label = reward_type
+        else:
+            reward_label = reward_categories[reward_type][0]
         avg_reward = []
         print("Evaluate reward type:",reward_type)
-        for r in tqdm(rew):
-            if r["label"] == reward_label:
-                avg_reward.append(r["score"])
-            else:
-                avg_reward.append(1-r["score"])
+        if type(rew[0]) is float:
+            avg_reward = [rew_item for rew_item in rew]
+        else:
+            for r in tqdm(rew):
+                if r["label"] == reward_label:
+                    avg_reward.append(r["score"])
+                else:
+                    avg_reward.append(1-r["score"])
         reward_results[reward_label] = avg_reward
         # avg_rewards.append(avg_reward)
         reward_labels.append(reward_label)
@@ -159,6 +197,7 @@ def mulreward_evaluate(querys,responses,reward_types,device):
     for reward_type in reward_types:
         reward_model_names.extend(args_utils.DefaultArgs.reward_models[reward_type])
     reward_pipes = load_pipes(reward_model_names, device=device)
+    # reward_pipes = []
     scores = []
     for reward_name,reward_pipe in zip(reward_model_names,reward_pipes):
         if "paraphrase" in reward_name:
@@ -167,8 +206,35 @@ def mulreward_evaluate(querys,responses,reward_types,device):
             scores.append(reward_pipe(responses))
         elif "simiplicity" in reward_name:
             scores.append(reward_pipe.get_scores(querys, responses, task="simplicity"))
+        elif "oasst" in reward_name:
+            tokenizer = AutoTokenizer.from_pretrained(reward_name)
+            tokenizer.truncation_side = "left"
+            input_content = tokenizer(
+            responses,
+            padding=True,
+            truncation=True,
+            max_length=1024,
+            return_tensors="pt",
+        ).to(device)
+            with torch.no_grad():
+                scores.append(reward_pipe(**input_content).logits.view(-1).tolist())
+        elif "OpenAssistant" in reward_name:
+            qa = [q+r for q,r in zip(querys,responses)]
+            r_score = []
+            for input in qa:
+                try:
+                    inputs = reward_pipe[1](input, return_tensors='pt',padding=True).to(device)
+                    r_score.append(reward_pipe[0](**inputs).logits[:,0].cpu().detach().item())
+                except:
+                    print("Error in OpenAssistant")
+                    print(input)
+                    # r_score.append(0.5)
+            scores.append(r_score)
+    reward_types = reward_model_names if len(reward_types) == 1 else reward_types
     reward_results = transform_reward(scores,reward_types,responses,verbose=False)
     for reward_key in reward_results.keys():
         reward_value = reward_results[reward_key]
         print(f"The avg score for {reward_key} is {sum(reward_value)/len(reward_value)}")
     return reward_results
+
+        

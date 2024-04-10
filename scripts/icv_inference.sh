@@ -1,8 +1,9 @@
 python3 icv_inference.py \
---dataset sentiment \
+--dataset stack_qa \
 --model_type llama-2 \
 --model_size "7b" \
 --start_id 0 \
---end_id 100 \
---reward_types sentiment \
---generate_woICV True \
+--end_id 200 \
+--prompt_type default \
+--reward_types stack_qa \
+--generate_woICV False \

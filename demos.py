@@ -1,4 +1,6 @@
 from datasets import load_dataset
+import pandas as pd
+import numpy as np
 #demo for expertise and simplicity
 # demo_sentiment = [
 #     ("Blockchain technology is like a special kind of computer notebook that everyone can write in.", "Blockchain technology can be likened to a immutable distributed ledger."),
@@ -8,17 +10,48 @@ from datasets import load_dataset
 dataset_honest = load_dataset('truthful_qa', 'generation')['validation']
 demo_honesty = dataset_honest
 
-# demo_sentiment = [("Zero stars, I hate it.", "Five stars, I love it."),
-                # ("it was terrible !", "it was awesome!"),
-                # ("i did nt like it.", "i love it."),
-                # ("i would call this the worse denny 's ever ", "i would call this the best denny 's ever "),
-                # ("i would recommend find another place.", "i would recommend this place again!")]
+def load_from_pairdata(dataset):
+    stackqa_paired_data_filename = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/{dataset}_paired_data.csv"
+    paired_data= pd.read_csv(stackqa_paired_data_filename)
+    difference = np.diff(paired_data[['r1_score1', 'r2_s1']], axis=1)
+    paired_data['r1_s1_diff'] = difference
+    pair_data = paired_data.sort_values(by='r1_s1_diff', ascending=False)
+    demo_stackqa =[]
+    for i in range(5):
+        demo_stackqa.append((pair_data.iloc[i]['response2'], pair_data.iloc[i]['response1']))
+    return demo_stackqa
 
-demo_sentiment = [("Paraphrase the sentence.", "Paraphrase the sentence to be positive"),
-                ("Paraphrase the sentence.", "Paraphrase the sentence to be happy"),
-                ("Paraphrase the sentence.", "Paraphrase the sentence to be joyful"),
-                ("Paraphrase the sentence.", "Paraphrase the sentence to be glad"),
-                ("Paraphrase the sentence.", "Paraphrase the sentence to be cheerful")]
+
+demo_sentiment = [("Zero stars, I hate it.", "Five stars, I love it."),
+                ("it was terrible !", "it was awesome!"),
+                ("i did nt like it.", "i love it."),
+                ("i would call this the worse denny 's ever ", "i would call this the best denny 's ever "),
+                ("i would recommend find another place.", "i would recommend this place again!")]
+
+# demo_sentiment = [("Paraphrase the sentence.", "Paraphrase the sentence to be positive."),
+#                 ("Paraphrase the sentence.", "Paraphrase the sentence to be happy."),
+#                 ("Paraphrase the sentence.", "Paraphrase the sentence to be joyful."),
+#                 ("Paraphrase the sentence.", "Paraphrase the sentence to be glad."),
+#                 ("Paraphrase the sentence.", "Paraphrase the sentence to be cheerful.")]
+
+demo_helpfulness = [
+    ("I’m really not sure if there is an obvious way to do this.","the most accurate way would be to use a computer in your car to log mileage as you drive."),
+    ("That’s a surprisingly tricky question!","State limit tables are useful for understanding how much money you could be held personally responsible for in the event of an accident."),
+    ("And if you want to use meat in a dehydrator, I like to use steaks","That’s great, and I’ll also write a recipe for a yummy dish with both apples and carrots!"),
+    ("...well I like to make really spicy stuff.","I’d suggest fruits, vegetables and meats. But do you want more specific ideas or something even more specific?"),
+    ("Would you like to start?","Start by measuring the area you want to cover (use paving")
+]
+
+demo_stackqa = [
+    ()
+]
+# demo_helpfulness = [
+#     ("Respond to the question","Response to the question with enough necessary information"),
+#     ("Respond to the question","Response to the question to be informative"),
+#     ("Respond to the question", "Provide a sufficient amount of relevant information in your response to adequately address the question."),
+#     ("Respond to the question","Provide an adequate answer to the inquiry with sufficient relevant details"),
+#     ("Would you like to start?","Reply to the query, ensuring it contains the requisite amount of pertinent information.")
+# ]
 
 demo_simplicity = [
     ("Blockchain technology is a special kind of computer notebook that everyone can write in.", "Blockchain can be likened to a immutable ledger."),

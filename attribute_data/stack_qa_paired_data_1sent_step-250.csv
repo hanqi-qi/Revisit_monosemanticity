@@ -1,0 +1,221 @@
+,question,response1,response2,r1_score1,r1_s2,r2_s1,r2_s2
+0,"I use HtmlUnit to fill form.
+I have a select `SELECT_A`. After selecting option the additional elements must appear in the page. But it's not working! I simulate Firefox 3.6.
+
+What do you think?
+
+I tried to use `NicelyResynchronizingAjaxController()` but it does not help.","one note: fireevent should be called with `""change""` parameter, not `""onchange""`","you can use the method `fireevent(""eventname"")` and pass eventname as a paramenter:```htmlselect fromselect = form",-5.387367248535156,-4.467820644378662,-6.236603260040283,-4.4244513511657715
+1,"Is there a Java Web Framework, with mvc, thrid-party integration APIs, libraries and tools? Something like Zend Framework for PHP?","there are a lot of java web frameworks, here you have a list with lots of them: <http://java-source",you also have [appfuse](http://appfuse,-5.337825298309326,-2.8387398719787598,-5.756614685058594,-1.2069181203842163
+2,i have a javascript file about 6000+ lines of codes created by myself. Now it has functions for different sections of my site.. Now what i want to ask is that should i use that large file or divide it in parts for respective sections and call it in respective section.,"i would suggest using 1 large one, as that requires only 1 http request",it depends on how much the http request cost is vs,-2.6342971324920654,-2.335019826889038,-2.034478187561035,-2.626739501953125
+3,"I'm trying to solve [this problem.](https://stackoverflow.com/questions/5461191/creating-screens-and-underlying-data-access-layer-dynamically-on-android) I was wondering if it's possible to use ORMLite (or modify it) to support this use case ? 
+
+Thanks.",just use [db4o](http://www,"now, you could create a table of screens which could then have a field table with the name of the screen-id, field name, and other information",-2.5556044578552246,-3.3225011825561523,-2.25954532623291,-2.510468006134033
+4,"What version of Eclipse do I need for Google Web Toolkit? I see about 7 versions, but none make any references to GWT. Google doesn't mention it to. I did install the PHP version.",since gwt means java programming i would recommend the java (default) version of eclipse or java ee version because they contain the java development tools which will help you very when coding in java,i suppose you should install javaee version,-1.2700960636138916,-3.645364761352539,-2.336561918258667,-4.259256839752197
+5,"I occasionally have Python programs that take a long time to run, and that I want to be able to save the state of and resume later. Does anyone have a clever way of saving the state either every x seconds, or when the program is exiting?","put all of your ""state"" data in one place and use a [pickle](http://docs","if you want to save everything, including the entire namespace and the line of code currently executing to be restarted at any time, there is not a standard library module to do that",-2.484609365463257,-2.7671220302581787,-1.9753473997116089,-1.7249574661254883
+6,"As I am writing my first grails webflow I am asking myself if there is anyy tool or script what can visualize the flow?
+
+Result can be a state diagram or some data to render in a graph tool like graphviz.",there's no tool around currently that will do this for you i'm afraid,"as far as i know there's only 2 plugin for grails which do visualization, but only build a class-diagram, they are [class diagram plugin](http://grails",-4.187442779541016,-2.338473320007324,-2.7171545028686523,-2.3374311923980713
+7,"I can't insert a value using this code:
+
+```
+ insert into t_category_values (CategoryCode,
+ CategoryValueCode, CategoryValue) values(2, 1, 1);
+
+```
+
+error msg
+
+```
+no primary key
+
+```",your query is wrong it should be:```insert into `dba`,```insert into `dba`,-2.9000203609466553,-3.695068359375,-3.1379010677337646,-4.214082717895508
+8,"Hey I have a .NET .aspx page that I would like to run every hour or so whats the best way to do this ?
+
+I assume it will have to open a browser window to do so and if possible that it closes the window after.
+
+EDIT : I have access over all features on the server",**option 1**: the cleanest solution would be to write a windows application that does the work (instead of an aspx page) and schedule this application on the server using the windows task scheduler,use this sample to schedule a task in asp,-3.4073572158813477,-2.9580867290496826,-5.245092868804932,-2.4751553535461426
+9,i heard that domain driven design pattern but do not know what it is exactly. is it design pattern? if so then how it is different from mvc or mvp. please discuss this. how to implement domain driven design pattern with c#.,in short: it's not a design pattern,i believe this link should get you started and more,-5.884804725646973,-3.8631834983825684,-4.688920497894287,-3.758680820465088
+10,"I know .NET and Mono are binary compatible but given a set of source code, will csc and mcs produce the exact same 100% identical binary CLI executable? Would one be able to tell whether an executable was compiled with csc or mcs?","a lot of things are not fully defined in the spec, or are implementation-specific extensions",i'm sure they don't produce the same il from the same sourcecode,-2.505241870880127,-1.1252459287643433,-2.044097900390625,-1.6234805583953857
+11,I am using lua to administrate a firewall server and want to obfuscate sensible variables such as login data. I have tried luac but the variable content is still easily readable. Is there any way to encrypt/decrypt these sensible data?,"i'm assuming you have a lua script which contains both the commands to send as well as any ""secret data"", and you want to be able to run this script without having to type in anything interactively",if you're allowed to use compiled libraries (ie,-3.0127179622650146,-2.9413623809814453,-3.4839887619018555,-3.509437084197998
+12,"I have a table with columns `user_id`, `time_stamp` and `activity` which I use for recoding user actions for an audit trail.
+
+Now, I would just like to get the most recent timestamp for each unique `user_id`. How do I do that?","`select max(time_stamp), user_id from table group by user_id;`",the following query should be what you want,-1.4285118579864502,-1.907775640487671,-1.5686016082763672,-1.2372617721557617
+13,"What does @propert(retain) do? it doesn't actually retain my object by my tests:
+
+```
+id obj = getObjectSomehow();
+NSLog(@""%d"", [obj retainCount]);
+propertyWithRetain = obj;
+NSLog(@""%d"", [obj retainCount]);
+
+// output:
+// 1
+// 1
+
+```
+
+How can I make a property that will really retain the object?","you're not using your property there, that's why it's not retaining!try this :```id obj = getobjectsomehow();nslog(@""%d"", [obj retaincount]);self",```propertywithretain = obj;```that just sets the ivar backing the property directly,-3.67091703414917,-3.1393702030181885,-2.5564146041870117,-3.865490674972534
+14,"In Objective C I want to create a simple application that posts a string to a php file using ASIHTTPRequest.
+
+I have no need for an interface and am finding it hard to find any example code. Does anyone know where I can find code, or can anyone give me an example of such code?",the asihttprequest documentation covers this,[this site](http://www,-3.4473111629486084,-3.2592670917510986,-4.703985691070557,-3.861001491546631
+15,"I want to add the ability to see the server exception on the client side. 
+
+If the server got some exception => i want to show some MessageBox on the client side that will show the exception message .. 
+
+How can i do it ?","first of all, you need to enable your wcf service to return detailed error information","in addition to the things marc mentioned you will also want to switch to the http client stack in order to avoid the dreaded generic ""not found"" error",0.03825676813721657,-0.9082723259925842,-2.439814567565918,-3.0546164512634277
+16,"I made a survey and gave to certain user Contribute permission to answer the survey.
+Appears that even if you give to user ""Read"" permissions Action bar is still available.
+Is there any chance to hide ""Action bar"" for limited permission users?",try using the `onbeforeunload()` function or jquery [unload()](http://api,"not sure jquery will help you here, but you could try```<html>    <body onunload='alert(""please do not leave!"")'></html>```should note that this will fire whenever the user tries to leave your page (refresh or otherwise)",-3.526177406311035,-1.632321834564209,-2.080606460571289,-1.6910864114761353
+17,Is there an NSNotification we can observe for when the device is on/off the phone?,"the `notificationcenter` doesn't send out any notifications abou this, but take a look at the `ctcallcenter` class introduced in ios 4","there isn't one that i'm aware of, but if the issue is that you want to know about the change in status bar then you can observe `uiapplicationwillchangestatusbarframenotification` (as documented towards the bottom of the [uiapplication documentation](http://developer",-4.511696815490723,-3.3421218395233154,-3.905836820602417,-2.949854850769043
+18,I'm using jQuery Treeview. Is there's a way to populate a children node in a specific parent on onclick event? Please give me some advise or simple sample code to do this.,"you can trigger the change event yourself in the `inputvalue` function:```function inputvalue(){   $(""#inputid"")",your function has an error,-3.181598424911499,-3.5376243591308594,-3.752459764480591,-2.9380431175231934
+19,"Is it possible to get list of translations (from virtual pages into physical pages) from TLB (Translation lookaside buffer, this is a special cache in the CPU). I mean modern x86 or x86\_64; and I want to do it in programmatic way, not by using JTAG and shifting all TLB entries out.","the linux kernel has no such dumper, there is page from linux kernel about cache and tlb: <https://www",you can get the list of va-pa translations stored in tlb but you may have to use a processor emulator like `qemu`,-0.536034107208252,-2.0292372703552246,-0.15264061093330383,-0.33564457297325134
+20,"I have a large text string and about 200 keywords that I want to filter out of the text.
+
+There are numerous ways todo this, but I'm stuck on which way is the best:
+
+1) Use a for loop with a gsub for each keyword
+
+3) Use a massive regular expression
+
+Any other ideas, what would you guys suggest",a massive regex is faster as it's going to walk the text only once,create a hash with each valid keyword as key,-1.1900193691253662,-1.3397425413131714,-2.3398056030273438,-2.3930141925811768
+21,"```
+$(window).bind(""beforeunload"",function(){
+    return ""cant be seen in ff"";
+});
+
+```
+
+The problem is that i can't see the ""cant be seen in ff"" on the confirm box in my FireFox browser, but works well in other browsers(IE Chrome)
+
+Any solutions??",see this: <https://bugzilla,do this ```<script>    window,-4.883396625518799,-2.4644405841827393,-4.724470138549805,-3.08355975151062
+22,I am running a parfor loop in Matlab that takes a lot of time and I would like to know how many iterations are left. How can I get that info?,"i don't believe you *can* get that information directly from matlab, short of printing something with each iteration and counting these lines by hand",try this fex file: <http://www,-2.0816497802734375,-1.1349217891693115,-6.251890182495117,-3.657909393310547
+23,"![http://farm4.static.flickr.com/3338/4564960137_0d3c09192d_o.png](https://i.stack.imgur.com/Y2gpf.png)
+
+can we change text in this lightbox
+
+want to change ""This site requires that you Connect with Facebook."" and ""Connect with Facebook to Continue""",it is always safe! (math agrees with me,"as marc b alluded to, java will promote `b` to a `long` before actually doing the `%` operation",-4.102183818817139,-4.027627468109131,-2.545097827911377,-2.9815444946289062
+24,"What I want is when checkbox1 is selected both checkbox labelled 1 will get selected and background will be removed
+
+[here is the fiddle](http://jsfiddle.net/rigids/D2vCf/)
+
+for eg if i select checkbox1 it should select both checkbox labelled checkbox1","the problem is that searching for id $(""#somethin"") is not possible to select more than one element",you can't have multiple dom elements with the same id,-2.0381901264190674,-2.223639488220215,-1.6798526048660278,-2.886277675628662
+25,"After renaming my heroku app from the heroku website, whenever I cd to its directory in a terminal and run any heroku command, I get `App not found`. Does anybody know of a way to remedy this?",```git remote rm herokuheroku git:remote -a newname```,"there is another way, you can fix it by renaming the app to the original name via web",-2.2230234146118164,-3.157317638397217,-1.0640971660614014,-2.5880818367004395
+26,"```
+int array[10] = {1,2,3,4,5,6,7,8};
+int *ptr = array;
+std::cout<<*(ptr+ 2); => O/P = 3
+
+int (*arr_ptr)[10] = &array;
+std::cout<<*(*arr_ptr+2); => O/P = 3
+
+```
+
+Whats the difference between these 2. I know what they mean, but if they give same result why do we have 2 different notations?","the first case is the normal case: `ptr` is a pointer to the first element of the array `array`, and it is indexed (using `*(ptr+2)`, which is a synonym for `ptr[2]`) to access the third element of that array",use the notation that you understand and that fits the problem domain,-5.1108808517456055,-3.157954216003418,-5.543062210083008,-3.0581047534942627
+27,"I want my app to have an activity that shows instruction on how to use the app. However, this ""instruction"" screen shall only be showed once after an install, how do you do this?",you can test wether a special flag (let's call it `firstrun`) is set in your application `sharedpreferences`,"**yes, you can fix this problem with sharedpreferences**```sharedpreferences pref;sharedpreferences",-3.9053308963775635,-2.0830724239349365,-3.9606575965881348,-3.301302433013916
+28,"I'm trying to delete the folder `mapeditor` from my Java engine on GitHub here (https://github.com/UrbanTwitch/Mystik-RPG)
+
+I'm on Git Bash.. messing around with `rm` and `-rf`but I can't seem to do it. How do I remove `mapeditor` folder from `Mystik-RPG` completely?
+
+Thanks.",from the `mystik-rpg` folder:```git rm -rf mapeditor```,"you need to `git rm` the folder, then `git commit` the removal",0.17837664484977722,-1.1509208679199219,-0.9554328918457031,-0.5798386335372925
+29,"I am debugging a website using firebug. The website opens a window, performs some operations and than closes it. This causes me to lose all of the firebug net history. Is there any way to prevent javastript from closing the window after its done, except changing the code?","i haven't tried to use it, but there's a settings in ff which supposedly lets you do what you wish","you can rewrite the `open` method, which adds a `beforeunload` event",-2.811840534210205,-2.4897499084472656,-2.9305145740509033,-1.504793643951416
+30,"I'm new in Ruby/Rails, so, my question: what is the perfect way to upload file and save filename in database with rails? Are there any Gem? Or maybe there are good build-in feature?",also try [carrierwave](https://github,most people use the [paperclip gem](https://github,-5.837123870849609,-3.838937759399414,-4.542773723602295,-3.6700072288513184
+31,"that opens Minecraft.exe, and logs in when clicked. Is this possible?","hmm, is this what you want; it should work:```@echo off""%cd%\minecraft",<http://www,-4.242633819580078,-4.09499454498291,-4.947676181793213,-3.664720058441162
+32,"I have a PDF form that needs to be filled out a bunch of times (it's a timesheet to be exact). Now since I don't want to do this by hand, I was looking for a way to fill them out using a python script or tools that could be used in a bash script.
+
+Does anyone have experience with this?",**for python you'll need the fdfgen lib and pdftk**@hugh bothwell's comment is 100% correct so i'll extend that answer with a working implementation,replace original file```os,-4.693365573883057,-4.1783447265625,-6.437559127807617,-4.362822532653809
+33,Editing of controller or any js file of sencha touch application bield from Sencha Architect 2 are editable or not?,manually or via the ui?manually you add a controller and then in the designer view choose codeand then overwrite,if you are using architect each time you save the project architect edits the code of all the files in the app folder & app,-2.1701009273529053,-3.8327834606170654,-1.7658485174179077,-2.9108893871307373
+34,"In Spring WS, endpoints are typically annotated with the @Endpoint annotation. e.g. 
+
+```
+@Endpoint
+public class HolidayEndpoint {
+    ...
+}
+
+```
+
+My question is: is there any way to deifine schema-based endpoint (based on XML configuration)? Thanks...",in your spring-ws-servlet,"generate and publish wsdl:```<sws:dynamic-wsdl id=""entityservice"" porttypename=""entity"" locationuri=""/ws/entityservice/""    targetnamespace=""http://me",-3.6577799320220947,-3.552051305770874,-4.767400741577148,-3.1336164474487305
+35,Should an HTML email message begin like any valid HTML-document and should it even have a DOCTYPE declaration?,"html emails should include a doctype, html and body declaration if you intend to do anything fancy at all","no, since most email clients strip out the `<html>` and `<body>` tags and replace them with their own (see hotmail)",-0.8187060356140137,-2.499213457107544,-0.47892147302627563,-1.980080008506775
+36,"Do I put it in each model, right before, `multisearchable :against => [ ... ]` or should this be in a separate file? Thanks.",i had similar questions about how to implement pgsearch,"okay found the answer, so i'll post it below",-3.1452512741088867,-3.6846420764923096,-5.091216087341309,-3.802152633666992
+37,"I am trying to make a gridview with large icon for an app but I couldn't find any tutorial about modifying a cell size on a grid layout on android. Can anyone give me an example or a link about it please?
+
+Thanks.",just like the other [adapterviews](http://developer,"did you try `android:numcolumns=""2""`",-4.243336200714111,-4.4289093017578125,-3.865828514099121,-3.8628015518188477
+38,"I have two divs:
+
+```
+<div class=""dialog large""></div>
+
+```
+
+and
+
+```
+<div class=""dialog""></div>
+
+```
+
+I have to remove the one with the class ""dialog"" but keep the one with ""dialog large"".
+
+If I do `$('dialog').remove();` they are both removed.
+
+Can anyone help me with this?",```$('div,"use this:```$(""div",-5.575889587402344,-4.1288065910339355,-5.944593906402588,-3.745846748352051
+39,By default Gson uses fields as a basis for it's serialization. Is there a way to get it to use accessors instead?,the developers of gson [say](https://groups,**note:** i'm the [**eclipselink jaxb (moxy)**](http://www,-1.8424267768859863,-4.014535903930664,-3.9600205421447754,-4.072638988494873
+40,"New to Eclipse and Solr, I imported apache-solr-3.6.0.war into Eclipse and run Solr with tomcat plugin. Now i want to debug some existing code, however how do i import the Solr source code?",without knowing how you imported it exactly: sounds like you are looking for [source attachment](https://stackoverflow,you can also check out the whole lucene/solr source:1,-3.5817084312438965,-3.527928590774536,-2.389451503753662,-3.2678914070129395
+41,"I want to know how to put text to a website's textbox with VB.NET.
+Like when you complete a textbox and press enter.
+Something like this:
+
+Dim web as webbrowser
+
+web.document.textbox(1).insert(""text"")",it would look something like this:```webbrowser1,"as giuseppe has suggested, you need to search for the element in the document and then set it's value property",-4.983488082885742,-2.013664722442627,-3.0770554542541504,-0.9036585688591003
+42,"I`m trying to create a loading windows with faded ( Blured ) background , that lock all the other windows 
+
+any issue for fade the background to lock other windows ?!",following are the methods from baseagiscript class which can be used to play sound files,this should provide the functionality you're looking for: [org,-3.406928062438965,-0.9401314854621887,-2.369805335998535,-1.7474117279052734
+43,"i want to find out total number of android APIs (Classes and Methods) used in my android application source code. but i want to do it programmatically. can any one suggest me how can i do so??
+
+Thanks in Advance",you can do it with [reflections api](http://code,the eclipse metrics plugin looks promising,-4.087695121765137,-2.869379997253418,-3.9607701301574707,-1.4352141618728638
+44,"What is difference between.
+what is best?
+Do you **drain** same **release** but different in drain don't save **retain**, while release save retain?
+**autorelease** save object in memory some time.","what is best? the answer, of course, is 'it depends'","**release**:in a reference-counted environment, since an autorelease pool cannot be retained , this method decrements the retain count",-4.447397708892822,-4.041040897369385,-3.1402382850646973,-3.810962677001953
+45,"I have two dictionaries as follows:
+
+`D1={'a':1,'b':2,'c':3}`
+
+and 
+
+`D2={'b':2,'c':3,'d':1}`
+
+I want to merge these two dictionaries and the result should be as follows:
+
+`D3={'a':1,'b':2,'c':3,'b':2,'c':3,'d':1}`
+
+how can I achieve this in python?",you may want to try:```d3 = {}d3,"what are you asking is not possible, since you cannot have two different keys with the same value in a python dictionary",-6.0329813957214355,-1.9991719722747803,-4.665224075317383,-0.9227426052093506
+46,"How to get access to the custom named views instead of giving the same method name in Zend framework 2.0.
+
+For Eg: 
+
+Under index action ""return new ViewModel();"" will call index.phtml but i want to call an another view here.",just call model view with view you want:```     $model = new viewmodel();      $model->settemplate('edit');      return $model;```more info: <http://framework,"within your controller, you can use the `viewmodel`'s `settemplate` method to change which script will be rendered:```phppublic function someaction(){    // do stuff here    $viewmodel = new viewmodel($anarrayofvariablesfortheview);    $viewmodel->settemplate('application/view/arbitrary');    return $viewmodel;}```note that you don't need to specify the `",-2.59991455078125,-3.325734853744507,-0.914271354675293,-2.5293362140655518
+47,"If I load a customer in the following way:
+
+```
+$customer = Mage::getModel('customer/customer')
+    ->load($customer_id);
+
+```
+
+Whats the difference between:
+
+```
+$customer -> getDefaultShippingAddress();
+
+```
+
+and
+
+```
+$customer -> getPrimaryShippingAddress();
+
+```
+
+Thanks in advance!",they return the same resultsee /app/code/core/mage/customer/model/customer,nothing because getdefaultshippingaddress() calls internally getprimaryshippingaddress(),-2.4824740886688232,-3.789985418319702,-2.1342668533325195,-4.772754669189453

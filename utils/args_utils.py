@@ -20,6 +20,7 @@ class DefaultArgs:
     in_8bit=True
     seed=0
     alpha=1.0
+    prompt_type = "default"
     generate_woICV = "False"
     control_method = "icv"
     reward_types = "toxicity" #toxicity sentiment simplicity relatedness
@@ -34,11 +35,19 @@ class DefaultArgs:
         # "SkolkovoInstitute/roberta_toxicity_classifier",
         # "OpenAssistant/reward-model-electra-large-discriminator",
     ]
+
+    reward_models_stackqa = [
+        "OpenAssistant/reward-model-deberta-v3-base", #["LABEL_0/Neutral","LABEL_1/Toxicity"]
+        "OpenAssistant/reward-model-electra-large-discriminator"
+        # "SkolkovoInstitute/roberta_toxicity_classifier",
+        # "OpenAssistant/reward-model-electra-large-discriminator",
+    ]
     
     reward_models_paraphrase = ["sentence-transformers/paraphrase-MiniLM-L6-v2"] #cosine similarity
     reward_model_simplicity = ["gpt35-turbo/simiplicity-classifier"]
+    reward_model_helpfulness = ["OpenAssistant/oasst-rm-2-pythia-6.9b-epoch-1"]
 
-    reward_models = {"toxicity": reward_models_toxicity,"sentiment": reward_models_sentiment,"simplicity": reward_model_simplicity,"relatedness": reward_models_paraphrase}
+    reward_models = {"toxicity": reward_models_toxicity,"sentiment": reward_models_sentiment,"simplicity": reward_model_simplicity,"relatedness": reward_models_paraphrase,"helpfulness":reward_model_helpfulness,"stack_qa":reward_models_stackqa}
     
 def get_args_ppo(default_args):
     parser = argparse.ArgumentParser(
@@ -66,6 +75,7 @@ def get_args_ppo(default_args):
     parser.add_argument('--reward_types', nargs='+',default="toxicity",help="reward models")
     parser.add_argument('--control_method', type=str,default="icv",help="icv, contrast")
     parser.add_argument('--output_dir', default="results/{model_type}-{model_size}/{dataset}")
+    parser.add_argument('--prompt_type', default="default", help="default or attriPrompt")
     args = parser.parse_args()
     
     return args

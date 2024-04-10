@@ -12,12 +12,12 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
-            "--dataset", "toxicity",
+            "--dataset", "stack_qa",
             "--model_type", "llama-2",
             "--model_size", "7b",
             "--start_id", "20",
-            "--end_id", "25",
-            "--reward_types", "toxicity",
+            "--end_id", "23",
+            "--reward_types", "stack_qa",
             "--generate_woICV", "True",
             ]
         },

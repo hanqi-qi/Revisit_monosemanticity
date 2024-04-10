@@ -301,6 +301,10 @@ class BaseProbInference:
 
         return direction.view(num_layers, hidden_dim)   
 
+    
+
+        
+        
     @staticmethod
     def get_attprob(model,inputs,rank=1):
         #get the rep as Lats for

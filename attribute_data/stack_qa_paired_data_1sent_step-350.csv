@@ -1,0 +1,394 @@
+,question,response1,response2,r1_score1,r1_s2,r2_s1,r2_s2
+0,"If multi thread concurrently query the following SQL to a database(postgresql):
+
+```
+UPDATE mytable SET n=n+1 WHERE n=0;
+
+```
+
+Whether or not 'n' will finally greater than 1","update will take write lock, so no concurrent operation will actually happen on the table","> > `update mytable set n=n+1 where n=0;`> > > whether or not 'n' will finally greater than 1> > > no it will not be ""*greater than 1*"" because adding `1` to `0` yields `1`",-1.6053493022918701,-1.7887980937957764,-3.3482024669647217,-3.9710874557495117
+1,"Tensorflow tends to preallocate the entire available memory on it's GPUs. For debugging, is there a way of telling how much of that memory is actually in use?",here's a practical solution that worked well for me: disable gpu memory pre-allocation using tf session configuration: ```config = tf,the tensorflow profiler has improved memory timeline that is based on real gpu memory allocator information<https://github,-1.4099642038345337,-2.185300588607788,-1.3615648746490479,-2.4978232383728027
+2,"How do I use ""UPSERT"" or ""INSERT INTO likes (user\_id,person\_id) VALUES (32,64) ON CONFLICT (user\_id,person\_id) DO NOTHING"" in PostgreSQL 9.5 on Rails 4.2?",have a look at `active_record_upsert` gem here: <https://github,you can achieve that by creating the sql using the active records internals,-1.880523920059204,-1.9295815229415894,-2.900505304336548,-3.0737876892089844
+3,"I was wondering why the result of the following code is 0 and not 3.
+
+```
+var fn = function(){
+    for (i = 0; i < 3; i++){
+        return function(){
+            console.log(i);
+        };
+    }
+}();
+
+fn();
+
+```",if you put `command = connection,you need to add command parameters outside the loop or declare command inside the loop,-4.423335075378418,-3.6920523643493652,-4.197988510131836,-3.3792450428009033
+4,"I have a list of strings (see below) how do I concatenate these strings into one list containing one string.
+
+```
+[""hello"",""stack"",""overflow""] 
+
+```
+
+to 
+
+```
+[""hellostackoverflow""]
+
+```
+
+I am just allowed to import Data.Char and Data.List","consider each string in a list as a list of characters```[""hello"",""stack"",""overflow""] :: [[char]]```concatenation is a process of connecting several lists into one","you can also use the list monad to reduce the list to a single string, then re-wrap the result in a list",-2.6723861694335938,-2.5629334449768066,-4.983943462371826,-2.9022231101989746
+5,"I have the following ARM assembly code:
+
+```
+mov r0, SP
+mov r1, LR
+bl func
+
+```
+
+Is there a way of calling the function func using C code? something like `func(SP, LR)`
+
+Thanks!",depends on what exactly you want to do and what compiler you use,"use output registers to place `lr` and `sp` in variables:```void *lr, *sp;asm (""mov %0, sp"" : ""=r"" (sp));asm (""mov %0, lr"" : ""=r"" (lr));func(lr, sp);```",-2.2239580154418945,-1.8935389518737793,-3.372758388519287,-2.383312702178955
+6,"When I run my project on my iphone or in the simulator it works fine.
+
+When I try to run it on an ipad I get the below error:
+
+*file was built for arm64 which is not the architecture being linked (armv7)*
+
+The devices it set to Universal.
+Does anybody have an idea about what else I should check?",just in case somebody has the same problem as me,i should have added armv6 for ipad 2,-1.5896193981170654,-2.156616449356079,-1.9935009479522705,-2.584089994430542
+7,"I am using laravel 5 and having following array:
+
+```
+    array:3 [▼
+  0 => 3,
+  1 => 4,
+  2 => 5
+]
+
+```
+
+Now i wanted to get all values/rows from table say 'X' having id's 3,4,5","try this query ```$array = [ 0 => 3,1 => 4, 2 => 5];$results = db::table('x')                    ->wherein('id',$array)                    ->get();```","**you can see the query sample for laravel 5**```  $result=db::table('x')->wherein('id',[3,4,5])->get();```",-1.282645344734192,-1.8236708641052246,-1.1434204578399658,-1.4476739168167114
+8,"I need to remove a string (""DTE\_Field\_"") from the id of elements in the dom.
+
+```
+<select id=""DTE_Field_CD_PAIS"" dependent-group=""PAIS"" dependent-group-level=""1"" class=""form-control""></select>
+
+var str=$(el).attr(""id"");
+str.replace(""DTE_Field_"","""");
+
+```",use [**`attr()`** method with callback](http://api,"```$('[id^=""dte_field_""]')",-2.5909204483032227,-2.481369972229004,-1.548050880432129,-2.3042681217193604
+9,"Does it simply mean that I have a parameter in my 'model\_params' variable that is not in this line?
+
+```
+params.require(...).permit(...)
+
+```
+
+I can't find offending parameter. Is there a way to accept all parameters?",a space is a [descendant combinator](https://www,i'd move the `display: none;` to the `,-4.406919002532959,-4.195942401885986,-5.041351795196533,-4.293332576751709
+10,"I have the following project structure `settings.gradle`:
+
+```
+include 'B'
+include 'C'
+
+rootProject.name = 'A'
+
+```
+
+How add gradle to subproject root project as dependency?","as far as the `project` method is concerned, the root project has no name","i assume the question being asked is: **""how to add a gradle root project as dependency to a subproject?""**the following worked for me, when i added this in my subproject's build",-5.105226993560791,-3.03098201751709,-3.5601322650909424,-3.756499767303467
+11,"I hava a list of sings: 
+
+```
+var sings = ["","",""."","":"",""!"",""?""]
+
+```
+
+How do I check if a word contains one of these signs and return it?
+
+For example:
+
+```
+""But,""
+
+return "",""
+
+""Finished.""
+
+return "".""
+
+""Questions?""
+
+return ""?""
+
+```","here is example function```var checksigns = function(str) {    var signs = ["","",""",you can use `filter()` and `indexof()` and return array of signs that are found in string,-5.2253804206848145,-2.6720261573791504,-5.250271797180176,-3.5017755031585693
+12,"how to block a jsp page 
+(i want is ,when I click the links to redirect each pages I want to block some specific pages for specific users) 
+I create an java script function to retrieve the jsp pages of each users(pages that user can access).But I have no idea to block other pages for the same user)",use js `document,you could use the `event,-3.1328554153442383,-4.382957458496094,-2.862718105316162,-4.583993434906006
+13,"I want to change the default login validation error message like:
+
+```
+Username & Password doesn't match
+
+```
+
+instead of
+
+```
+these credentials do not match our records
+
+```
+
+How to do this ?",you can change this message to another one in this file:```resources/lang/en/auth,do one thing make new file message,-3.644814968109131,-2.2950329780578613,-3.8921446800231934,-2.785747528076172
+14,"So i'm trying to generate all binaries of a size n but with the condition that only k 1s. i.e
+
+for size n = 4, k=2, (there is 2 over 4 combinations)
+
+```
+1100
+1010
+1001
+0110
+0101
+0011
+
+```
+
+I'm stuck and can't figure out how to generate this.","using the basic recursive method for printing all binary sequence all that remains is to enforce your constraints:```    private static void binseq(int n, int k, string seq) {    if (n == 0) {        system",one approach is to generate all combinations of `k` values from the set of `n` numbers 0,-2.6783273220062256,-3.507944345474243,-3.3479509353637695,-2.1190335750579834
+15,"I am using ExtJS 6 version.
+
+I have panel element and dynamically I am updating panel html as 
+
+```
+panel.update(""<img src=app/resources/first.jpg ></img>"");
+
+```
+
+after updating html, image is not loading. I did `panel.updateLayout();` still image is not loading.
+
+Please suggest",if you want the list of lines without the trailing new-line character you can use `str,if you want to return a list of lines without `\n` and then print the length of this list:```def line_list(fname):    with open(fname) as file:        return file,-2.8337864875793457,-2.44008207321167,-3.1901841163635254,-3.3499019145965576
+16,"```
+pt=new Date(2019,11,12,8,2,3)
+
+console.log(pt.getFullYear(),"" "",pt.getMonth());
+
+```
+
+gives result `2019 "" "" 11`
+
+```
+console.log(pt.getFullYear()+"" ""+pt.getMonth());
+
+```
+
+gives the result as `2019 11`
+
+What is the difference between using, and + in this example?",the first of these gives three separate arguments to console,"with the (,) you're with the console",-5.723546504974365,-2.6506450176239014,-5.493931293487549,-3.321713447570801
+17,"why do we need self referential object in javascript.
+example 
+
+```
+let a = {};
+a.self = a;
+
+```
+
+now a property self is referring to itself and become circular object.
+
+in nodejs when we use routing library like hapi.
+the request object which we receive is circular",the problem came from ***malloc(total\_courses + sizeof(course\_collection))***you only allocate array of pointer of course\_collection,user this malloc(total\_courses + sizeof(struct course)) instead of malloc(total\_courses + sizeof(course\_collection))segmentation fault due to memory allocation mostly for arraysarr[n] we use it till '0' to 'n-1' { carefully observe not 'n'},-1.8231899738311768,-2.602292537689209,-3.438319683074951,-3.836987018585205
+18,"i am running the airflow pipeline but codes looks seems good but actually i'm getting the airflow.exceptions.AirflowException: Cycle detected in DAG. Faulty task: 
+can u please help to resolve this issue",this can happen due to duplicate task\_id'a in multiple tasks,"without the code, it's kind of hard to help you",-2.7690067291259766,-3.281978130340576,-4.1152544021606445,-4.494412422180176
+19,"Let us assume In PHP
+
+```
+$i = 016;
+echo $i / 2;
+
+```
+
+The output is returning `7`.! why..?",appending 0 to the front of a number in php is making it octal,"the leading `0` will cause `016` to be interpreted as written in base `8`, thus in base `10` it will actually be `14`",-1.3049782514572144,-1.11808180809021,-2.6862730979919434,-1.8219207525253296
+20,"I'm using JavaMail to the handle emails. Subject is encoded in following charset:
+
+`Subject: =?x-mac-ce?Q?Wdro=BFenia_znaku_CE?=`
+
+How to decode this using a JavaMail.",windows [seems to use](https://msdn,obviously x-mac-ce is a non-standard charset,-5.856613636016846,-4.036240100860596,-4.310361862182617,-2.140096664428711
+21,"My Android app `webview` works fine with chrome version 61 or 62, but when I update to version 63. My `webview`does not store the history and `webView.canGoBack()` always returns `false`. But previous versions of chrome work fine. How to solve?",this issue should be chromium's bug,even i was facing this issue,-2.3425979614257812,-2.247063398361206,-1.0063413381576538,-2.0355417728424072
+22,"When I run the following code
+
+```
+public class Program
+{
+    public static void Main()
+    {
+        string s = ""480"";
+        Console.WriteLine(1 == -1 ? 0 : s[1]);
+        Console.WriteLine(s[1]);
+    }
+}
+
+```
+
+I get 
+
+```
+56
+8
+
+```
+
+I don't understand how I get 56.",your `0 : s[1]` converts the `char` in `s[1]` to an integer,s[1] is the int value of the char,-3.7042174339294434,-2.8277029991149902,-3.2627077102661133,-3.1759188175201416
+23,"How C++ handles cout of negative value of signed char? Is the behavour defined in C++11 standard? I am using MinGW C++ 11 compiler. It looks the signed value is converted to unsigned type by adding 256 and then prints extended ASCII characters. 
+
+```
+signed char a=-35;
+std::cout<<a;
+
+```",according to [this](http://en,use type casting to `int`,-1.5061328411102295,-1.7061445713043213,-1.290468454360962,-1.3172645568847656
+24,i am creating an angular table using this example from angular material <https://material.angular.io/components/table/overview> is there anyway to export it in excel or pdf?,in your table component,"you can use ngx-csv for angular 7 works fine ""<https://www",-2.896723508834839,-2.1476638317108154,-3.2719216346740723,-3.3472042083740234
+25,I can trigger my AWS pipeline from jenkins but I don't want to create buildspec.yaml and instead use the pipeline script which already works for jenkins.,in order to user codebuild you need to provide the codebuild project with a buildspec,you will need to write a buildspec for the commands that you want aws codebuild to run,-2.8605217933654785,-2.9043049812316895,-1.4127473831176758,-2.248476982116699
+26,"I am looking for a solution to convert my string to `camelcaps` by the `dot` it contains.
+
+here is my string: `'sender.state'`
+
+I am expecting the result as : `'senderState'`;
+
+I tried this: `'sender.state'.replace(/\./g, '');` it removes the `.` but how to handle the `camel caps` stuff?",you can pass a function to `,"without `regex` - this might help :```var str = ""bad",-2.2913975715637207,-3.0957114696502686,-2.545131206512451,-3.3691797256469727
+27,"I need to click a button whose xpath is ""**//input[contains(@value,'Export to Excel')]**"" through **Execute Javascript** keyword. I don't know how to use it.
+
+Can anyone help me out!!!",you can write it as below```execute javascript    document,"the solution i found out for this problem is i have **reloaded the page** after **executing the autoit** script, then i was able to execute the remaining code",-3.705559253692627,-3.093660593032837,-4.81135892868042,-3.4648141860961914
+28,"When we are using hive, data is not displayed in perfect table format. Column name and actual data related to column differs in position if the column name is big. How to fix it?",you specified the condition in `where` clausefor the condition that you required```delete dfrom   mytab dwhere (          d,in mysql use where clause```delete from mytab where x1 = b and act=0 or x1 is null;;```just execute this sql and done,-2.649517774581909,-2.801516056060791,-2.594132661819458,-2.8872156143188477
+29,"I want to format pagination in laravel like this: 
+
+```
+api/posts?from=1&to=10
+
+```
+
+I tried:
+
+```
+$posts = new LengthAwarePaginator(Post::all(), 100, 10);
+return $posts->toArray();
+
+```
+
+Which didn’t work at all :( Please help","try this```$x = array_search ('english', $request->all());```","use ```$x = array_keys ($request->all(),'english');```returns all the keys having value englishif given only the array returns all the keys",-4.142888069152832,-4.06209659576416,-3.563762664794922,-3.292238712310791
+30,"I am looking for a textbox control that suggests words as the user types, similar to SuggestAppend for textboxes in winforms, except for WPF. I have looked around on the WPFToolkit and haven't really found anything that fits my needs.
+
+Thanks.","declare an enum autocompletemode too with value(append, none,suggestappend,suggest)```public enum autocompletemode```create an custom usercontrol with textbox and itemcontrols",wpftoolkit contains [autocompletebox](https://github,-1.6850225925445557,-2.6723246574401855,-0.3388797640800476,-2.389172315597534
+31,"[![](https://i.stack.imgur.com/PfIiJ.gif)](https://i.stack.imgur.com/PfIiJ.gif)
+
+How do I develop the above gif image using Unity3D?",why don't you just use css to do the job? ```css,"i know this is reeeeally late, but",-5.720764636993408,-4.211535930633545,-5.924540042877197,-4.4611053466796875
+32,"How can I get the following effect with FFMPEG?
+
+[![enter image description here](https://i.imgur.com/8KeRNk5.gif)](https://i.imgur.com/8KeRNk5.gif)
+
+I know I have to do it with Zoompan, but the truth is, I've been trying for a while and I can not!",the below pom,"maven has to download the dependencies, so you have to specify the package you're trying to import in the pom file",-5.901794910430908,-4.5041093826293945,-4.799415588378906,-4.109422206878662
+33,"Other people who have asked this question had answers about downloading Vim from Vim.org, but that website doesn't respond. 
+
+Are there other ways to use Vi on Windows?",use a mutation observer to watch the list item instead of watching the document as a whole,most jquery code has a similar counterpart available,-5.424243450164795,-4.572209358215332,-5.932461738586426,-4.425306797027588
+34,"Can anybody help in knowing whether IFC entity type names are case sensitive or case insensitive.
+
+For example: Can we replace `IFCPERSON` with `IfcPerson` (camel case) or `ifcperson` (small) in an \*.ifc file?",how about applying the following convention in every single context:simply assume that they are case sensitive and work accordingly,you might want to take a look at [an online version of iso10303-p21](http://www,-3.548187255859375,-2.9688243865966797,-5.007216930389404,-3.188807487487793
+35,"Using `@WebMvcTest` will auto-configure all web layer beans by looking for a `@SpringBootConfiguration` class (such as `@SpringBootApplication`). 
+
+If the configuration class is in a different package and can't be found by scanning, can I provide it directly to `@WebMvcTest`?",the following will point to the correct `@springbootapplication` class:```@runwith(springjunit4classrunner,"if you are using ***@webmvctest*** for your test , it means you are focusing mainly on testing the spring mvc layer and not going any deeper into the application",-2.117807626724243,-3.2106118202209473,-1.2616653442382812,-2.3082480430603027
+36,"I do not understand why after clicking the link ""undefined"" is shown. Does anyone know why?
+
+```js
+let allBlocks = [""one"",""two""];
+
+for (i = 0; i < allBlocks.length; i++) {
+  document.body.innerHTML += '<p id="""" onclick=""test(allBlocks[i])"">Link</p>';
+}
+
+function test(n){
+    alert(n);
+}
+
+```",even `i` is in global scope after the loop value of `i` would be array length so it would be like `array[array,maybe what you need is string interpolation```for (i = 0; i < allblocks,-1.625493049621582,-3.449460506439209,-1.2185888290405273,-2.940579652786255
+37,"Why do I need to bind () a function inside a constructor? 
+
+```
+constructor (props){
+    super(props);
+    this.funcao = this.funcao.bind(this);
+}
+
+```
+
+could not bind () without using a constructor?","you don't have to bind the methods in the constructor, have a look at the the explanation below","keep in mind that if you write your functions in your class as arrow functions, you don't need to bind(this)",-4.693369388580322,-3.564554214477539,-2.414426803588867,-4.607913970947266
+38,"I need to pick a random number from 31 to 359.
+
+```
+rand(31, 359);
+
+```
+
+I need the number is not part from this array of numbers:
+
+```
+$badNumbers = array(30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360);
+
+```
+
+How can I do this please?
+
+Thanks.","i would probably do this as it completes when one is found:```while(in_array($rand = rand(31, 359), $badnumbers));echo $rand;```here is another way using an array:```$good  = array_diff(range(31, 359), $badnumbers);echo $good[array_rand($good)];```or randomize and choose one:```shuffle($good);echo array_pop($good);```the array approaches are useful if you need to pick more than one random number",what you need is a *recursive function* (which is a function that keeps calling itself with a condition to break out once the requirement is met) or an infinite loop that breaks when it finds a number that isn't in the array,-1.521515130996704,-1.7301349639892578,-1.3309506177902222,-2.983168363571167
+39,"I don't know how to resolve this problem,can someone help me.
+
+```
+The following packages have unmet dependencies:
+ testdisk : Depends: libntfs-3g861
+E: Unable to correct problems, you have held broken packages.
+
+```","can you try after changing your template like this:```<ul class=""nav navbar-nav"">      <li><a [routerlink]='[""/search""]'>search <span class=""slider""></span></a></li>      <li *ngif=""isloggedin$ | async""><a (click)=""logout()"">logout</a></li>  </ul>```notice the `async` pipe to unwrap the observable value","to your last comment, this is happening because the service is being re-initialized and your observable are being reset",-3.4071717262268066,-2.957364559173584,-5.270709037780762,-3.8910915851593018
+40,"I want to open a file (`file`) that is stored in a folder (`Source`) which is in the same directory as the current workbook. I get a runtime error 1004 indicating that it the file can't be located. What am I doing worng? 
+
+```
+Set x = Workbooks.Open(ThisWorkbook.Path & ""\Source\file*.xlsx"")
+
+```","since you want the wildcard to stay, you need to loop through the files in the folder",replace the wildcard with actual filename,-0.8100304007530212,-1.9253511428833008,-0.05519069731235504,-1.1376625299453735
+41,"In my head section of my `form.layout.blade.php` I have the following:
+
+```
+<head>
+   <script src=""/js/main.js""></script>
+<head>
+
+```
+
+This is layout file is loaded before all pages are loaded. Is there a way to *not* load `main.js` for a specific route?",you can use if statement like this,"the workaround i used for not loading scripts on all sites, is that i put script paths in variables in controllers, something like this: ```public function show($id){   $scripts[] = '/js/main",-2.9915857315063477,-3.310494899749756,-2.0523390769958496,-3.415862560272217
+42,"```
+this.setState({
+      object1: { ...object2 },
+});
+
+```
+
+I know it does something to the state. but I'm not able to understand what it means? Is this a technique in JS/React?",you are essentially setting `object1` to be the same as `object2` via [spread syntax](https://developer,this is spread operator and you can read more about it here<https://developer,-1.4322309494018555,-2.7303168773651123,-3.1939618587493896,-4.160994529724121
+43,"How to run Ruta scripts from command line?
+I tried this but not sure if this is right command.
+`javac DataExtraction.ruta`
+
+Error : `error: Class names, 'DataExtraction.ruta', are only accepted if annotation processing is explicitly requested`",you are taking the wrong argument from the function parameter and should remove the `return` from `else` statement:  correct code will be:```pyimport osdef files():    files = os,you can cleanly do it like this```ext_images = [',-4.635685920715332,-3.3859729766845703,-4.681183338165283,-3.3785789012908936
+44,"The input can only include two chemical elements: `C` and `H`
+The program must control.
+How can I provide that?
+
+```
+if (formul.Contains('C') == true && formul.Contains('H') == true)
+    return true;
+
+```
+
+When my input is `HCA` it is still true. I want it only includes `C` and `H`.",```csusing system,"chemical formulas (as far as i know) can contain also numbers, so you have to take that into account as well, here is my idea of solving problem:```return ! formula",-4.999242782592773,-2.841148614883423,-5.015257358551025,-3.066645860671997
+45,How can I optimize the processing of strings?,your problem is you are making n copies of t and concatenating them,just a remark:  in general working with char[] is much faster than working with string,-3.7474794387817383,-3.872225761413574,-2.826451301574707,-1.9623932838439941
+46,"I find the method `public ValueStateDescriptor(String name,TypeInformation<T> typeInfo,T defaultValue)`is now deprecated and the documentation says to manage the default value by checking whether the contents of the state is null.
+I wonder what does this suggestion for?",we have discovered that our own proxy were writing access-control-allow-origin header as well,`*` is not valid value for `access-control-allow-origin` for sites running on https,-4.647400856018066,-3.1569762229919434,-4.255430221557617,-3.5633087158203125
+47,"I want to implement a profile popup like Books app on iOS. Do you know any package or something to make this? Thank a lot.
+
+GIF below shows the behavior that I want to implement:
+<https://gph.is/g/EvAxvVw>","use `in`: this will be simpler ```shif a in ('a', 'u'):    #do something ```understanding your code",it's not related to python,-6.500715255737305,-4.571550369262695,-6.184991359710693,-4.7590484619140625
