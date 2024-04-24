@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import copy
 from tqdm import tqdm
-os.environ["CUDA_VISIBLE_DEVICES"] = "6"
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 import torch
 
 from utils.common import setup_env
@@ -96,8 +96,11 @@ icv_vectors = []
 for single_dataset in args.reward_types:
     if single_dataset == "stack_qa":
         demo = load_from_pairdata(single_dataset)
+    elif single_dataset == "hh_rlhf_helpful":
+        demo = load_from_pairdata("hh_rlhf_helpful")[:5]
     else:
         demo = dataset[single_dataset]
+    print("Demos:",demo)
     icv_vectors.append(task_agent.get_icv(model, tokenize_each_demonstration(tokenizer, demo)))
 # icv_init =  torch.zeros_like(icv_vectors[0])
 # icvs_shift = [icv_init+icv_vector for icv_vector in icv_vectors] #[layer,feature_dimension]

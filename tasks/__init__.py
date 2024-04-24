@@ -6,6 +6,7 @@ task_mapper = {
     'simplicity': DemoProbInferenceForStyle,
     'helpfulness': DemoProbInferenceForStyle,
     'stack_qa': DemoProbInferenceForStyle,
+    'hh_rlhf': DemoProbInferenceForStyle,
 }
 
 

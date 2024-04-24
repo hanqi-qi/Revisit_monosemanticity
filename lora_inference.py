@@ -15,11 +15,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "7"
-from models.model_generate import model_generate_once, prepare_prompt_query
+import time
+# os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 from dataclasses import dataclass, field
 import logging
-from utils import reward_utils
 import pathlib
 import typing
 
@@ -31,18 +30,26 @@ from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 import transformers
 from transformers import Trainer, BitsAndBytesConfig
 import torch
-from lora_attribute.train_val_datasets import AlpacaSupervisedDataset, load_tqa_sentences, load_arc_sentences, load_stackqa_sentences, get_logprobs_accuracy
+from models.model_generate import model_generate_once
+from utils import reward_utils
+from lora_attribute.train_val_datasets import AlpacaSupervisedDataset, load_tqa_sentences, load_arc_sentences, get_logprobs_accuracy,get_model_responses
 import pickle
 
-from args import (
+from lora_attribute.args import (
     ModelArguments,
     TrainingArguments, 
     LoraArguments, 
     LorraArguments,
 )
-
 from transformers.utils import logging
 logging.set_verbosity(transformers.logging.ERROR)
+
+
+#create directory for results saving
+
+
+
+
 def compute_loss(self, model, inputs, target_layers, alpha, beta, max_res_len=64, return_outputs=False, **kwargs):
 
     input_ids = inputs.get("input_ids")
@@ -145,6 +152,9 @@ def train():
         lorra_args,
     ) = parser.parse_args_into_dataclasses()
 
+    output_dir = f"results/lorra_llama7b/{training_args.dataset_name}"
+    os.makedirs(output_dir, exist_ok=True)
+
     device_map = "auto"
     world_size = int(os.environ.get("WORLD_SIZE", 1))
     ddp = world_size != 1
@@ -171,8 +181,8 @@ def train():
     lora_layers_to_transform = list(range(lorra_target_layers[-1] + 1)) # LoRA layers
 
     lora_config = LoraConfig(
-        r=lora_args.lora_r,
-        lora_alpha=lora_args.lora_alpha,
+        r=lora_args.lora_r, # Lora attention dimension (the "rank").
+        lora_alpha=lora_args.lora_alpha, #The alpha parameter for Lora scaling.
         target_modules=lora_args.lora_target_modules,
         lora_dropout=lora_args.lora_dropout,
         bias=lora_args.lora_bias,
@@ -190,7 +200,7 @@ def train():
             model.is_parallelizable = True
             model.model_parallel = True
 
-    model = get_peft_model(model, lora_config) #
+    model = get_peft_model(model, lora_config) #add adaptor
     training_args.deepspeed = None
     if training_args.deepspeed is not None and training_args.local_rank == 0:
         model.print_trainable_parameters()
@@ -207,18 +217,19 @@ def train():
     )
     tokenizer.pad_token = tokenizer.unk_token
 
-    train_dataset = AlpacaSupervisedDataset(tokenizer=tokenizer, num_examples=10000, lorra_args=lorra_args)
+    train_dataset = AlpacaSupervisedDataset(tokenizer=tokenizer, num_examples=99999999999, lorra_args=lorra_args,dataset_name=training_args.dataset_name)
     if training_args.do_eval:
         val_datasets = {
             "tqa": load_tqa_sentences(lorra_args.user_tag, lorra_args.assistant_tag),
             "arc-e": load_arc_sentences(),
-            "stack_qa": load_stackqa_sentences(),
+            # "hh_rlhf": load_hh_rlhf()
         }
         bsz = training_args.per_device_eval_batch_size
     else:
         val_datasets = {}
 
     class CustomTrainer(Trainer):
+            
         def compute_loss(self, model, inputs, return_outputs=False):
             return compute_loss(self, 
                                 model, 
@@ -229,7 +240,7 @@ def train():
                                 max_res_len=lorra_args.max_res_len,
                                 return_outputs=return_outputs)
         
-        def evaluate(self, eval_dataset=None, ignore_keys=None, sanity_check=False, **kwargs):
+        def evaluate(self, eval_dataset=None, ignore_keys=None, sanity_check=False, reward_types=training_args.reward_types, evaluate_nums = training_args.evaluate_nums, **kwargs):
             self.model.eval()
 
             if sanity_check:
@@ -237,18 +248,21 @@ def train():
             metrics = {}
             for val_set in val_datasets:
                 questions, answer, labels = val_datasets[val_set]
-                print(f'Evaluating {val_set} accuracy...')
+                print(f'Evaluating {val_set} performance on {evaluate_nums} samples...')
                 with torch.no_grad():
-                    responses = []
-                    for query in questions:
-                        query_prompt = prepare_prompt_query(tokenizer,query,val_set,"default")
-                        decoded_output = model_generate_once(model,tokenizer,query_prompt)
-                        responses.append(decoded_output.split("[/INST]")[1])
-                    reward_utils.mulreward_evaluate(questions,responses,["stack_qa"],device="cuda:0")
-                    
-                    # acc = get_logprobs_accuracy(self.model, self.tokenizer, questions, answer, labels, bsz)
-                    # acc_key = 'acc' if val_set == 'tqa' else 'acc_norm'
-                    # metrics[f"{val_set}_accuracy"] = acc[acc_key]
+                    if labels is not None:
+                        #classification task
+                        acc = get_logprobs_accuracy(self.model, self.tokenizer, questions, answer, labels, bsz)
+                        acc_key = 'acc' if val_set == 'tqa' else 'acc_norm'
+                        metrics[f"{val_set}_accuracy"] = acc[acc_key]
+                    else:
+                        print("===Eval results===")
+                        query = questions[:evaluate_nums]
+                        responses = get_model_responses(self.model, self.tokenizer, query,training_args.dataset_name, bsz)
+                        print(len(responses))
+                        step = str(time.time()).split(".")[0]
+                        metrics = reward_utils.mulreward_evaluate(query,responses,reward_types,"cuda:0")
+                        reward_utils.save_results(output_dir, [metrics], query[:len(responses)], responses, reward_types, f"lorra_base_{step}_{reward_types[0]}.jsonl")
             self.model.train()
             print("===Eval results===")
             print(metrics)
@@ -258,13 +272,13 @@ def train():
         model=model, tokenizer=tokenizer, args=training_args, train_dataset=train_dataset
     )
     model.config.use_cache = False
-    trainer.evaluate(eval_dataset=val_datasets, sanity_check=True)
+    trainer.evaluate(eval_dataset=val_datasets, reward_types=training_args.reward_types, sanity_check=True, evaluate_nums = training_args.evaluate_nums)
     print("begin to train")
     trainer.train()
     trainer.save_state()
 
     if training_args.local_rank == 0:
-        # model.save_pretrained(training_args.output_dir) # saving adapter
+        model.save_pretrained(training_args.output_dir) # saving adapter
         merged_model = model.merge_and_unload() # saving full model
         merged_model.save_pretrained(training_args.output_dir)
         tokenizer.save_pretrained(training_args.output_dir)

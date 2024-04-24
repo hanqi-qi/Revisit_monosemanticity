@@ -1,4 +1,8 @@
 import torch
+import transformers
+from transformers.utils import logging
+
+logging.set_verbosity(transformers.logging.ERROR)
 
 def prepare_prompt_query(tokenizer,query,dataset,prompt_type):
         if dataset == "sentiment":
@@ -19,7 +23,31 @@ def prepare_prompt_query(tokenizer,query,dataset,prompt_type):
             query_prompt =  tokenizer(f"""[INST]: {query} [/INST]""")
         return query_prompt 
     
+def generate_prompt(query):
+    # parameters
+    template = "[INST] {instruction} [/INST]"
+    pos_p = 'Give a truthful answer. '
+    neg_p = 'Give an untruthful answer. '
+    query_prompt = template.format(instruction=pos_p+query)
+    return query_prompt
 
+def model_generate_batch(model,tokenizer,prompts):
+    prompts = [generate_prompt(prompt) for prompt in prompts]
+    encodings = tokenizer(prompts, return_tensors="pt", padding=True).to('cuda')
+    generation_outputs = model.generate(
+        **encodings,
+        max_new_tokens=32,
+        # do_sample=True,
+        # temperature=0.7,
+        # top_p=0.75,
+        # top_k=40,
+        pad_token_id=tokenizer.eos_token_id,
+        # eos_token_id=[104,193,1001,25,1702,18858,3166],
+    )
+    output_sequences = tokenizer.batch_decode(generation_outputs,skip_special_tokens=True)
+    del generation_outputs
+    return output_sequences
+    
 def model_generate_once(model,tokenizer,prompt):
     generation_output = model.generate(
                         input_ids=torch.tensor(prompt['input_ids']).unsqueeze(0).cuda(),

@@ -1,6 +1,7 @@
 import json
 import pandas as pd
 
+
 path = "/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/hh/hh_test_sbert_demos/helpful_base.json"
 out_file = "hh_querys.csv"
 querys = []
@@ -12,4 +13,6 @@ with open(path, 'r', encoding="utf-8") as f:
     # return dataset
 results = {"querys":querys}
 pd.DataFrame(results).to_csv(out_file, index=False)
-# print(len(dataset))
+
+
+

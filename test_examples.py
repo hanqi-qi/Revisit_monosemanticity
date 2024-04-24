@@ -4,12 +4,14 @@ from attribute_data import emotion_dataset
 import numpy as np
 import os
 import json
+import random
+from tqdm import tqdm
 
 
 MIN_SIZE = 10
 MAX_SIZE_NEWS = 1500
 
-def load_queries(dataset):
+def load_queries(dataset,split="train"):
     responses = []
     if dataset == "toxicity":
         # toxicity_queries = load_dataset("s-nlp/paradetox")["train"]
@@ -17,6 +19,33 @@ def load_queries(dataset):
         # negative_queries = toxicity_queries["en_neutral_comment"][5:]
         data = load_dataset("s-nlp/paradetox")["train"]
         querys = data["en_toxic_comment"][5:]
+    elif dataset == "truthfulqa":
+        dataset = load_dataset('truthful_qa', 'generation')['validation']
+        querys = dataset['question']
+        responses = dataset['best_answer']
+    elif dataset == "toxicity_pair":
+        """Reference: https://github.com/ajyl/dpo_toxic/blob/main/toxicity/train_dpo/pplm_dataset.py"""
+        data_dir = os.path.join("/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/", "toxicity_pairwise")
+        filenames = [os.path.join(data_dir, filename) for filename in os.listdir(data_dir) if filename.endswith(".jsonl")]
+        data = []
+        for filename in tqdm(filenames):
+            with open(filename, "r") as file_p:
+                file_data = file_p.readlines()
+            data.extend(file_data)
+        random.shuffle(file_data)
+        print(len(data))
+        valid_size = 200
+        if split == "train":
+            data = data[:-valid_size]
+        else:
+            data = data[-valid_size:]
+        querys,pos_inputs, neg_inputs = [],[],[]
+        for idx in range(len(data)): #24376
+            x = json.loads(data[idx].strip())
+            querys.append(x["prompt_text"])
+            neg_inputs.append(x["unpert_gen_text"])
+            pos_inputs.append(x["pert_gen_text"])
+        responses = {"pos_inputs":pos_inputs,"neg_inputs":neg_inputs}           
     elif dataset == "psoup":
         data_path = "/scratch/prj/cllm/datasets/psoups/data/psoups/alpaca_gpt4_P1B_10k.json"
         data_pd = load_dataset("json", data_files=data_path, split = 'train')
@@ -43,19 +72,21 @@ def load_queries(dataset):
             print("Load from huggingface")
             dataset_id = "lvwerra/stack-exchange-paired"
             querys = _build_stackqa_dataset(split="train",dataset_id=dataset_id)
-    elif dataset == "hh_rlhf":
-        filename = "/scratch/prj/cllm/datasets/hh_rlhf/train_deduplicated.json"
+    elif "hh_rlhf" in dataset:
+        filename = "/scratch/prj/cllm/datasets/hh_rlhf/test_deduplicate.csv"
         if os.path.isfile(filename):
-            print("Load from local files")
-            querys = pd.read_csv(filename)["question"]
-            response1 = pd.read_csv(filename)["response1"]
-            response2 = pd.read_csv(filename)["response2"]
-            responses = [r1 + "<SPLIT>"+ r2 for r1,r2 in zip(response1,response2)]
+            print(f"Load from local files-{dataset}")
+            contents = pd.read_csv(filename)
+            querys = contents["query"].tolist()
+            response1 = contents["chosen"].tolist()
+            response2 = contents["rejected"].tolist()
+            responses = response1
+            # responses = [r1 + "<SPLIT>"+ r2 for r1,r2 in zip(response1,response2)]
         else:
             print("Load from huggingface")
             dataset_id = "Anthropic/hh-rlhf"
             querys = _build_rlhf_dataset(dataset_name=dataset_id,split="validation")
-    return querys,responses
+    return querys,responses,None
 
 def _build_rlhf_dataset(dataset_name, split="train", max_size=100):
 

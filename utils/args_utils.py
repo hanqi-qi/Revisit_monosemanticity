@@ -5,6 +5,11 @@ from datetime import datetime
 
 from trl import set_seed
 
+# WANDB__SERVICE_WAIT = 300
+LOCAL_FILES_ONLY = os.environ.get("LOCAL_FILES_ONLY", "0") == "1"
+FOLDER_EXPE = os.path.join(os.environ.get("DATA", "/"), "experimentsllama")
+LOAD_IN_8BIT = True
+
 class DefaultArgs:
     dataset='insts_varations'
     prompt_version='default'
@@ -30,9 +35,9 @@ class DefaultArgs:
     ]
 
     reward_models_toxicity = [
-        "cooperleong00/deberta-v3-large_toxicity-scorer", #["LABEL_0/Neutral","LABEL_1/Toxicity"]
+        # "cooperleong00/deberta-v3-large_toxicity-scorer", #["LABEL_0/Neutral","LABEL_1/Toxicity"]
         # "sentence-transformers/paraphrase-MiniLM-L6-v2" #cosine similarity
-        # "SkolkovoInstitute/roberta_toxicity_classifier",
+        "SkolkovoInstitute/roberta_toxicity_classifier",
         # "OpenAssistant/reward-model-electra-large-discriminator",
     ]
 
@@ -43,11 +48,16 @@ class DefaultArgs:
         # "OpenAssistant/reward-model-electra-large-discriminator",
     ]
     
-    reward_models_paraphrase = ["sentence-transformers/paraphrase-MiniLM-L6-v2"] #cosine similarity
+    reward_models_assistant_helpfulness = [
+        "Ray2333/gpt2-large-helpful-reward_model"
+    ]
+    
+    # reward_models_paraphrase = ["sentence-transformers/paraphrase-MiniLM-L6-v2"] #cosine similarity
+    reward_models_paraphrase = ["gpt35-turbo/paraphrase"] #cosine similarity
     reward_model_simplicity = ["gpt35-turbo/simiplicity-classifier"]
     reward_model_helpfulness = ["OpenAssistant/oasst-rm-2-pythia-6.9b-epoch-1"]
 
-    reward_models = {"toxicity": reward_models_toxicity,"sentiment": reward_models_sentiment,"simplicity": reward_model_simplicity,"relatedness": reward_models_paraphrase,"helpfulness":reward_model_helpfulness,"stack_qa":reward_models_stackqa}
+    reward_models = {"toxicity": reward_models_toxicity,"sentiment": reward_models_sentiment,"simplicity": reward_model_simplicity,"relatedness": reward_models_paraphrase,"helpfulness":reward_model_helpfulness,"stack_qa":reward_models_stackqa,"hh_rlhf_helpful":reward_models_assistant_helpfulness,'paraphrase':reward_models_paraphrase}
     
 def get_args_ppo(default_args):
     parser = argparse.ArgumentParser(

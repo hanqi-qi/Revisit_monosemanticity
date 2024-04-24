@@ -1,7 +1,69 @@
 import torch
 from torch.nn import functional as F
+from typing import Dict, Optional, Sequence, Union, List
+import transformers
+#for peft
+from peft import PeftConfig, PeftModel
+
+from transformers.utils import logging
+logging.set_verbosity(transformers.logging.ERROR)
+
+def all_gather_if_needed(
+    values: torch.Tensor, rank: int, world_size: int
+) -> torch.Tensor:
+    """Gather and stack/cat values from all processes, if there are multiple processes."""
+    if world_size == 1:
+        return values
+
+    all_values = [torch.empty_like(values).to(rank) for _ in range(world_size)]
+    dist.all_gather(all_values, values)
+    cat_function = torch.cat if values.dim() > 0 else torch.stack
+    return cat_function(all_values, dim=0)
 
 
+def disable_dropout(model: torch.nn.Module):
+    """Disable dropout in a model."""
+    for module in model.modules():
+        if isinstance(module, torch.nn.Dropout):
+            module.p = 0
+
+def pad_to_length(
+    tensor: torch.Tensor,
+    length: int,
+    pad_value: Union[int, float],
+    dim: int = -1,
+) -> torch.Tensor:
+    if tensor.size(dim) >= length:
+        return tensor
+    else:
+        pad_size = list(tensor.shape)
+        pad_size[dim] = length - tensor.size(dim)
+        return torch.cat(
+            [
+                tensor,
+                pad_value
+                * torch.ones(
+                    *pad_size, dtype=tensor.dtype, device=tensor.device
+                ),
+            ],
+            dim=dim,
+        )
+        
+def load_local_policy(model_paths, device):
+    # config = PeftConfig.from_pretrained(f"{model_paths[0]}",device_map=device)
+    model = transformers.AutoModelForCausalLM.from_pretrained(f"{model_paths[0]}",device_map=device)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(f"{model_paths[0]}")
+    model = PeftModel.from_pretrained(model, f"{model_paths[0]}", adapter_name="ckp500",device_map=device)
+    model.load_adapter(f"{model_paths[1]}", adapter_name="ckp1k",device_map=device)
+
+    adapters = ["ckp500", "ckp1k"]
+    weights = [1.0, 1.0]
+    adapter_name = "merge"
+    model.add_weighted_adapter(adapters, weights, adapter_name, combination_type="ties", density=0.2)
+    print(model.device)
+    
+    return model, tokenizer
+                       
 def prepare_position_ids_from_attention(attention_mask,past_key_values_length,position_ids):
     position_ids = None
     if attention_mask is not None and position_ids is None:

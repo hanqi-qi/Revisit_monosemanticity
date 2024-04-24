@@ -11,14 +11,22 @@ dataset_honest = load_dataset('truthful_qa', 'generation')['validation']
 demo_honesty = dataset_honest
 
 def load_from_pairdata(dataset):
-    stackqa_paired_data_filename = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/{dataset}_paired_data.csv"
-    paired_data= pd.read_csv(stackqa_paired_data_filename)
-    difference = np.diff(paired_data[['r1_score1', 'r2_s1']], axis=1)
-    paired_data['r1_s1_diff'] = difference
-    pair_data = paired_data.sort_values(by='r1_s1_diff', ascending=False)
-    demo_stackqa =[]
-    for i in range(5):
-        demo_stackqa.append((pair_data.iloc[i]['response2'], pair_data.iloc[i]['response1']))
+    if dataset == "stack_qa":
+        stackqa_paired_data_filename = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/{dataset}_paired_data.csv"
+        paired_data= pd.read_csv(stackqa_paired_data_filename)
+        difference = np.diff(paired_data[['r1_score1', 'r2_s1']], axis=1)
+        paired_data['r1_s1_diff'] = difference
+        pair_data = paired_data.sort_values(by='r1_s1_diff', ascending=False)
+        demo_stackqa =[]
+        for i in range(5):
+            demo_stackqa.append((pair_data.iloc[i]['response2'], pair_data.iloc[i]['response1']))
+    elif dataset == "hh_rlhf_helpful":
+        pair_data = pd.read_csv("/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/hh_rlhf_helpful_paired_data.csv")
+        demo_stackqa =[]
+        for i in range(len(pair_data)):
+            if len(pair_data.iloc[i]['chosen'].split(" "))<50 and len(pair_data.iloc[i]['reject'].split(" "))<50:
+                demo_stackqa.append((pair_data.iloc[i]['reject'], pair_data.iloc[i]['chosen']))
+        print(f"retrieved {len(demo_stackqa)} pairs of data from hh_rlhf_helpful")
     return demo_stackqa
 
 

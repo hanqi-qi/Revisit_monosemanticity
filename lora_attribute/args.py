@@ -49,4 +49,34 @@ class TrainingArguments(transformers.TrainingArguments):
     grouped_to_max_length: bool = field (
         default=False, metadata={"help": "Group to chunks of max length for pretraining"}
     )
+    evaluate_nums: int = field (
+        default=200, metadata={"help": "Number of evaluation samples"}
+    )
+    dataset_name: str = field(
+        default = "toxicity_pair",
+        metadata={"help": "Dataset name"}
+    )
+    
+    reward_types: typing.List[str] = field(
+        default_factory=lambda: ["toxicity"]
+    )
+    
+    policy_paths: str = field(
+        default = None ,
+        metadata={"help": "local paths saving the trained policy models"}
+    )
 
+    kl_gamma: float = field(
+        default = 0.0,
+        metadata={"help": "KL annealing gamma"}
+    )
+    
+    beta: float = field(
+        default = 0.1,
+        metadata={"help": "Beta for reward shaping"}
+    )
+    
+    reference_free: bool = field(
+        default = False,
+        metadata={"help": "Reference free reward"}
+    )

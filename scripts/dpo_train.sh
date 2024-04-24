@@ -1,0 +1,40 @@
+#!/bin/bash
+
+CUDA_VISIBLE_DEVICES=3 python train_dpo.py \
+--model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf" \
+--dataset_name 'tatsu-lab/alpaca' \
+--reward_types 'paraphrase' \
+--user_tag '[INST]' \
+--assistant_tag '[/INST]' \
+--pos_type 'a trustful' \
+--neg_type 'an untrustful' \
+--control_template "Give {type} answer." \
+--target_layers "10,12,14,16,18,20" \
+--do_eval \
+--lorra_alpha 5 \
+--lorra_beta 0 \
+--lora_r 8 \
+--lora_alpha 16 \
+--lora_dropout 0.05 \
+--output_dir ./results/un_contrast_lasttokenalign/ \
+--overwrite_output_dir \
+--num_train_epochs 50 \
+--bf16 True \
+--evaluate_nums 200 \
+--per_device_train_batch_size 32 \
+--per_device_eval_batch_size 32 \
+--gradient_accumulation_steps 1 \
+--evaluation_strategy "steps" \
+--eval_steps 200  \
+--save_strategy "steps" \
+--save_steps 150 \
+--learning_rate 3e-4 \
+--weight_decay 0. \
+--lr_scheduler_type "constant" \
+--logging_strategy "steps" \
+--logging_steps 50 \
+--tf32 True \
+--model_max_length 128 \
+--q_lora False \
+--gradient_checkpointing True \
+--report_to "wandb" \

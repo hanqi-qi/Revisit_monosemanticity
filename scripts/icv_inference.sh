@@ -1,9 +1,9 @@
 python3 icv_inference.py \
---dataset stack_qa \
+--dataset hh_rlhf \
 --model_type llama-2 \
 --model_size "7b" \
 --start_id 0 \
 --end_id 200 \
 --prompt_type default \
---reward_types stack_qa \
---generate_woICV False \
+--reward_types hh_rlhf_helpful \
+--generate_woICV True \

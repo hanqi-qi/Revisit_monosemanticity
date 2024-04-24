@@ -15,9 +15,6 @@ import torch.nn.functional as F
 from transformers.utils import logging
 logging.set_verbosity(transformers.logging.ERROR)
 
-orig_template_pair = "[INST] <<SYS>> Paraphrase the sentence <</SYS>>[/INST] [INST] {instruction} [/INST] {assistant_tag} {response}"
-pos_template_pair = "[INST] <<SYS>> Paraphrase the sentence that is {type} <</SYS>>[/INST] [INST] {instruction} [/INST] {assistant_tag} {response}"
-neg_template_pair = "[INST] <<SYS>> Paraphrase the sentence that is {type} <</SYS>>[/INST] [INST] {instruction} [/INST] {assistant_tag} {response}"
 
 orig_template = "{user_tag} {instruction} {assistant_tag} {response}"
 control_templates = [
@@ -34,19 +31,18 @@ max_res_len = 64
 def get_truncated_outputs(all_outputs, prefixes, num_examples, user_tag, assistant_tag, pos_type, neg_type, control_template):
     orig_s, pos_s, neg_s = [], [], []
     if type(all_outputs) == dict:
-        print("Processing Paired data")
-        for pos_input,neg_input, p in zip(all_outputs["pos_inputs"],all_outputs["neg_inputs"],prefixes):
+        for pos_s,neg_s, p in zip(all_outputs["pos_inputs"],all_outputs["neg_inputs"],prefixes):
             orig_s.append(orig_template.format(
                 user_tag=user_tag, assistant_tag=assistant_tag,
-                instruction=p, response=pos_input))
+                instruction=p, response=pos_s))
             pos_s.append(pos_template.format(
                 user_tag=user_tag, assistant_tag=assistant_tag,
-                instruction=p, type=control_template.format(type=pos_type), response=pos_input))
+                instruction=p, type=control_template.format(type=pos_type), response=pos_s))
             neg_s.append(neg_template.format(
                 user_tag=user_tag, assistant_tag=assistant_tag,
-                instruction=p, type=control_template.format(type=neg_type), response=neg_input))
+                instruction=p, type=control_template.format(type=neg_type), response=neg_s))
 
-            if len(pos_input) > num_examples:
+            if len(pos_s) > num_examples:
                 break
     else:
         for s, p in zip(all_outputs, prefixes):
@@ -80,23 +76,23 @@ class AlpacaSupervisedDataset(Dataset):
         # instructions = instructions[:num_examples]
         # outputs = {"pos_inputs":outputs["pos_inputs"][:num_examples], "neg_inputs":outputs["neg_inputs"][:num_examples]}
         print(f"Loaded {len(instructions)} samples for training")
-        self.user_tag = lorra_args.user_tag
-        self.assistant_tag = lorra_args.assistant_tag
-        # if type(outputs)==list:
-        # print("No availiable paired data, only contrastive insts")
-        orig_s, pos_s, neg_s = get_truncated_outputs(outputs, 
-                                                    instructions, 
-                                                    num_examples, 
-                                                    self.user_tag,
-                                                    self.assistant_tag, 
-                                                    lorra_args.pos_type, 
-                                                    lorra_args.neg_type,
-                                                    lorra_args.control_template)
-        # elif type(outputs)==dict and "pos_inputs" in outputs.keys() and "neg_inputs" in outputs.keys():
-        #     print("Paired data availiable")
-        #     orig_s = outputs["pos_inputs"]
-        #     pos_s = orig_s
-        #     neg_s = outputs["neg_inputs"]
+        if type(outputs)==list:
+            print("No availiable paired data, only contrastive insts")
+            self.user_tag = lorra_args.user_tag
+            self.assistant_tag = lorra_args.assistant_tag
+            orig_s, pos_s, neg_s = get_truncated_outputs(outputs, 
+                                                        instructions, 
+                                                        num_examples, 
+                                                        self.user_tag,
+                                                        self.assistant_tag, 
+                                                        lorra_args.pos_type, 
+                                                        lorra_args.neg_type,
+                                                        lorra_args.control_template)
+        elif type(outputs)==dict and "pos_inputs" in outputs.keys() and "neg_inputs" in outputs.keys():
+            print("Paired data availiable")
+            orig_s = outputs["pos_inputs"]
+            pos_s = orig_s
+            neg_s = outputs["neg_inputs"]
         self.prompt_s = instructions
         self.orig_s = orig_s
         self.pos_s = pos_s
@@ -236,8 +232,7 @@ class AlpacaSupervisedDataset(Dataset):
             }
         
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
-        flag = True
-        if flag:
+        if "pair" not in self.dataset_name:
             assistant_tag = self.assistant_tag
             orig_s, pos_s, neg_s = self.orig_s[i], self.pos_s[i], self.neg_s[i]
             self.tokenizer.padding_side = "left"
@@ -247,7 +242,7 @@ class AlpacaSupervisedDataset(Dataset):
                 neg_s.split(assistant_tag)[0]],
                 padding="max_length",
                 truncation=True,
-                max_length=128,
+                max_length=256,
                 return_tensors="pt",
             )
             self.tokenizer.padding_side = "right"

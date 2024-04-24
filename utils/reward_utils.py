@@ -37,10 +37,10 @@ class Paraphrase:
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
-    def get_scores(self, querys, responses):
+    def get_scores(self, querys, responses,task="",references=None):
         scores = []
-        for query, response in zip(querys, responses):
-            encoded_input = self.tokenizer([query,response], padding=True, truncation=True, return_tensors='pt')
+        for res, ref in zip(responses, references):
+            encoded_input = self.tokenizer([res,ref], padding=True, truncation=True, return_tensors='pt')
             model_output = self.model(**encoded_input)
             sentence_embeddings = self.mean_pooling(model_output, encoded_input['attention_mask'])
             relatedness = util.pytorch_cos_sim(sentence_embeddings[0,:], sentence_embeddings[1,:]).item()
@@ -50,41 +50,53 @@ class Paraphrase:
 
 class AutoEvaluator:
     def __init__(self, model_name):
-        openai.api_type = "azure"
-        openai.api_version = "2023-05-15"
-        openai.api_base = 'https://jiazheng.openai.azure.com/'
-        openai.api_key = 'ffa407b2cf4b430db9e42751b2fbcbb9'
-        self.model = model_name
-        self.task_prompt = {"simplicity": "Please check the following two sentences A and B, and select the one more simplified and easy to understand. Return A or B to solve the task.","infomrativeness":"Please check the following sentences A and B, and select the one more informative. Return A or B to solve the task."}
+        openai.api_key = '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'
+        self.task_prompt = {"simplicity": "Please check the following two sentences A and B, and select the one more simplified and easy to understand. Return A or B to solve the task.","infomrativeness":"Please check the following sentences A and B, and select the one more informative. Return A or B to solve the task.",
+        "paraphrase_AB":"Please compare the following sentences A and B to the given reference answer, and select the one more aligned with the given reference. Return A or B to solve the task.",
+        "paraphrase_reference":"Please check if the candidate response aligns with the given reference. Return YES if aligns well, otherwise return NO"}
     def get_response(self,query):
         response = openai.ChatCompletion.create(
-            engine="gpt35", # The deployment name you chose when you deployed the GPT-3.5-Turbo or GPT-4 model.
+            model="gpt-3.5-turbo", # The deployment name you chose when you deployed the GPT-3.5-Turbo or GPT-4 model.
             messages=[
-            {"role": "system", "content": "You are a intelligent assistant."},
-            {"role": "user", "content": query}
-        ],
+                {"role": "system", "content": "You are a intelligent assistant."},
+                {"role": "user", "content": query}
+            ],
         )
         reply = response.choices[0].message.content
         return reply
-    def get_scores(self, querys, responses, task):
+    def get_scores(self, querys, responses, task, references=None):
         scores = []
         instruction = self.task_prompt[task]
-        for query, response in zip(querys, responses):
-            input_prompt = instruction + f"\nA: {query}\nB: {response}"
+        references = responses if references is None else references
+        querys = responses if querys is None else querys
+        for query, response, reference in zip(querys, responses, references):
+            query = query.replace("\n","")
+            response = response.replace("\n","")
+            if task == "paraphrase_AB":
+                input_prompt = instruction + f"\nReference: {reference}\nCandidate Answer: \nA: {query}\nB: {response}"
+                gt_word = 'A'
+            elif task == "paraphrase_reference":
+                input_prompt = instruction + f"\nReference: {reference}\nCandidate Answer: {response}"
+                gt_word = 'YES'
+            else:
+                input_prompt = instruction + f"\nA: {query}\nB: {response}"
             # response = self.model(input_prompt)
             response = openai.ChatCompletion.create(
-                engine="gpt35", # The deployment name you chose when you deployed the GPT-3.5-Turbo or GPT-4 model.
+                model="gpt-3.5-turbo", # The deployment name you chose when you deployed the GPT-3.5-Turbo or GPT-4 model.
                 messages=[
                 {"role": "system", "content": "You are a intelligent assistant."},
                 {"role": "user", "content": input_prompt}
             ],
             )
             reply = response.choices[0].message.content
-            if "B" in reply:
+            if gt_word in reply:
                 score = {"label":task,"score":1.0}
             else:
                 score = {"label":task,"score":0.0}
             scores.append(score) 
+            print(input_prompt)
+            print(reply)
+            print(score)
         return scores 
     
     
@@ -108,12 +120,12 @@ class Tokenizer:
             return "decapoda-research/llama-7b-hf"
         return model_name
     
-    
-def save_results(output_dir,demo,querys, responses, args, variant):
-    attri = "_".join([reward for reward in args.reward_types])
+def save_results(output_dir,demo,querys, responses, reward_types, variant):
+    attri = "_".join([reward for reward in reward_types])
     filename = f"{output_dir}/{variant}_{attri}.json"
     assert len(querys) == len(responses)
-    results = {"querys":querys.tolist(),"responses":responses,"demo":demo}
+    querys = querys.tolist() if type(querys) is not list else querys
+    results = {"querys":querys,"responses":responses,"demo":demo}
     # result = pd.DataFrame({"querys":querys,"responses":responses})
     # result.to_csv(filename)
     with open(f"{filename}", "w") as outfile: 
@@ -134,8 +146,8 @@ def load_pipe(reward_model, device):
                         tokenizer=Tokenizer.load_tokenizer_name(reward_model))
         if "toxicity" in reward_model:
             pipe.model.config.id2label = {0: "NEUTRAL", 1: "TOXICITY"} 
-    elif "paraphrase" in reward_model:
-        pipe = Paraphrase(reward_model,device)
+    # elif "paraphrase" in reward_model:
+    #     pipe = Paraphrase(reward_model,device)
     elif "oasst" in reward_model:
         pipe = AutoModelForSequenceClassification.from_pretrained(reward_model).to(device)
     elif "gpt35-turbo" in reward_model:
@@ -150,6 +162,7 @@ def load_pipe(reward_model, device):
     else:
         model = AutoModelForSequenceClassification.from_pretrained(reward_model).to(device)
         tokenier = AutoTokenizer.from_pretrained(reward_model)
+        tokenier.pad_token = tokenier.eos_token
         pipe = [model,tokenier]
     return pipe
 
@@ -158,15 +171,19 @@ def load_pipes(reward_models, device):
         ]
     return pipes
 
-def print_reward(response,rewards):
+def print_reward(response,rewards,querys=None,references=None):
     for idx in range(len(response)):
-        print(f"Response: {response[idx]}")
+        print(f"Res1: {response[idx]}")
+        if querys is not None:
+            print(f"Res2(query): {querys[idx]}")
+        if references is not None:
+            print(f"Reference: {references[idx]}")
         for key in rewards:
             print(f"{key}: {rewards[key][idx]}")
         print("\n")
     
 reward_categories = {"toxicity":["NEUTRAL","TOXICITY"],"sentiment":["POSITIVE","NEGATIVE"],"simplicity":["simplicity"],"relatedness":["relatedness"],"helpfulness":["helpfulness"]}
-def transform_reward(reward,reward_types,responses,verbose=False):
+def transform_reward(reward,reward_types,responses,querys=None,references=None,verbose=False):
      #use specified reward label in reward categories or reward type instead
     reward_labels, avg_rewards = [],[] 
     reward_results = {}
@@ -189,11 +206,12 @@ def transform_reward(reward,reward_types,responses,verbose=False):
         # avg_rewards.append(avg_reward)
         reward_labels.append(reward_label)
     if verbose:
-        print_reward(responses,reward_results)
+        print_reward(responses,reward_results,querys,references)
     return reward_results
 
-def mulreward_evaluate(querys,responses,reward_types,device):
+def mulreward_evaluate(querys,responses,reward_types,device,references=None,verbose=False):
     reward_model_names = []
+    print(reward_types)
     for reward_type in reward_types:
         reward_model_names.extend(args_utils.DefaultArgs.reward_models[reward_type])
     reward_pipes = load_pipes(reward_model_names, device=device)
@@ -201,7 +219,9 @@ def mulreward_evaluate(querys,responses,reward_types,device):
     scores = []
     for reward_name,reward_pipe in zip(reward_model_names,reward_pipes):
         if "paraphrase" in reward_name:
-            scores.append(reward_pipe.get_scores(responses,querys))
+            #querys here is another response we wanna compare with
+            task = "paraphrase_AB" if querys is not None else "paraphrase_reference"
+            scores.append(reward_pipe.get_scores(querys,responses,task=task,references=references))
         elif "toxicity" in reward_name or "sentiment" in reward_name:
             scores.append(reward_pipe(responses))
         elif "simiplicity" in reward_name:
@@ -218,8 +238,14 @@ def mulreward_evaluate(querys,responses,reward_types,device):
         ).to(device)
             with torch.no_grad():
                 scores.append(reward_pipe(**input_content).logits.view(-1).tolist())
-        elif "OpenAssistant" in reward_name:
-            qa = [q+r for q,r in zip(querys,responses)]
+        elif "reward" in reward_name:
+            qa = []
+            for q, r in zip(querys,responses):
+                try:
+                    qa.append("\n\nHuman:"+q+"\n\nAssistant:"+r)
+                except:
+                    print("Error in generating qa_pair")
+                    continue
             r_score = []
             for input in qa:
                 try:
@@ -228,13 +254,16 @@ def mulreward_evaluate(querys,responses,reward_types,device):
                 except:
                     print("Error in OpenAssistant")
                     print(input)
-                    # r_score.append(0.5)
             scores.append(r_score)
+    # print(len(r_score))
     reward_types = reward_model_names if len(reward_types) == 1 else reward_types
-    reward_results = transform_reward(scores,reward_types,responses,verbose=False)
+    reward_results = transform_reward(scores,reward_types,responses,querys=querys,references=references,verbose=verbose)
+    reward_dict = {}
     for reward_key in reward_results.keys():
         reward_value = reward_results[reward_key]
-        print(f"The avg score for {reward_key} is {sum(reward_value)/len(reward_value)}")
-    return reward_results
+        rvalue = sum(reward_value)/len(reward_value)
+        reward_dict[reward_key] = rvalue
+        print(f"The avg score for {reward_key} is {rvalue}")
+    return reward_dict
 
         
