@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from torch.utils.data import Dataset, DataLoader
 from transformers.integrations import WandbCallback
 from pathlib import Path
@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 import logging
 import torch.nn as nn
 import torch.nn.functional as F
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Adam
@@ -69,19 +68,37 @@ tokenizer.pad_token = tokenizer.unk_token
 fea_hooks = get_feas_by_hook(policy_model,target_acts=["mlp"],target_layers=[31])
 
 class attri_cls(nn.Module):
-    def __init__(self, act_dim=1024):
+    def __init__(self, act_dim=4096, tokenizer=tokenizer):
         super(attri_cls, self).__init__()
         self.act_dim = act_dim  
-        self.fc = nn.Linear(act_dim, 2)
+        self.fc = nn.Linear(act_dim, 2,no_bias=True)
+        self.tokenizer = tokenizer
     def loss(self, logits, labels):
         loss = F.cross_entropy(logits, labels)
         return loss
+    def get_last_token_logits(self,input_rep,input_ids):
+        labels = input_ids[:, 1:].clone()
+        input_rep = input_rep[:, :-1, :]
+        loss_mask = labels != 0
+
+        # dummy token; we'll ignore the losses on these tokens later
+        labels[labels == 0] = 0
+        out_rep = torch.mean((input_rep * loss_mask.unsqueeze(-1)),dim=1)
+        return out_rep
+        # last_non_padding_indices = (input_ids != self.tokenizer.pad_token_id).to(torch.float32).sum(dim=1)
+        # last_non_padding_indices[torch.where(last_non_padding_indices==input_ids.shape[1])] = input_ids.shape[1]-1
+        # gather_indices = last_non_padding_indices.unsqueeze(-1).to(torch.int64)
+        # last_token_representations = torch.gather(input_rep, 1, gather_indices.unsqueeze(-1).expand(-1, -1, input_rep.size(-1)))
+        # return last_token_representations.squeeze(1)
+    
     def forward(self,input_ids, attention_mask):
         with torch.no_grad():
             policy_model(input_ids, attention_mask=attention_mask)
         acts = fea_hooks["mlp"]
-        acts = torch.mean(acts[-1].fea,dim=1)
-        cls_logit = F.softmax(self.fc(acts.detach()))
+        #either use the last in the padding sentence or real sentence
+        acts = self.get_last_token_logits(acts[-1].fea.detach(),input_ids)
+        # acts = torch.mean(acts[-1].fea,dim=1)
+        cls_logit = F.softmax(self.fc(acts),dim=-1)
         acts = None
         return cls_logit
 
@@ -113,31 +130,31 @@ def train(model, dataloader, optimizer, device, epoch,do_eval=True, best_acc=0):
         cls_logit = model(input_ids, attention_mask=attention_mask)
         loss = model.loss(cls_logit, labels)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        # torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         total_loss += loss.item()
         if do_eval:
             if idx%(global_step+1) == 0:
                 print("evaluating")
                 acc = evaluate(model,tokenizer,training_args.dataset_name,bsz=16)
-                print(f"Accuracy: {acc:.4f}")
                 if acc > best_acc:
                     best_acc = acc
                     np.save(os.path.join(save_dir, f"epoch_{epoch}_batch_{idx}_attri_w_{acc}.npy"), model.fc.weight.detach().cpu().numpy())
+                    print(f"Accuracy: {acc:.4f}")
 
     return total_loss / len(dataloader)
 
 train_dataset = AlpacaSupervisedDataset(tokenizer=tokenizer, num_examples=99999, lorra_args=lorra_args,training_args=training_args)
 dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 fea_size = policy_model.config.hidden_size
-model = attri_cls(act_dim=fea_size)
-save_dir = "/scratch/prj/lmrep/hanqi/attribute_edit/results/attri_cls/"
+model = attri_cls(act_dim=fea_size,tokenizer=tokenizer)
+save_dir = "/scratch/prj/lmrep/hanqi/attribute_edit/results/attri_cls/chat_model/"
 path = Path(save_dir)
 path.mkdir(parents=True, exist_ok=True)
 
 optimizer = Adam(model.fc.parameters(), lr=1e-4)
 num_epochs = 10
-global_step = 0
+global_step = 50
 best_acc = 0
 for epoch in range(num_epochs):
     print(f"Epoch {epoch + 1}/{num_epochs}")

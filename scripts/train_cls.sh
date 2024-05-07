@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python llama_chat_attri.py \
---model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-hf" \
+--model_name_or_path  ""/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf"" \
 --dataset_name 'wiki2_nontoxic_paired_data' \
 --eval_dataset 'wiki2_nontoxic_paired_data' \
 --use_label 'True' \
@@ -23,8 +23,8 @@ python llama_chat_attri.py \
 --num_train_epochs 50 \
 --bf16 True \
 --evaluate_nums 200 \
---per_device_train_batch_size 8 \
---per_device_eval_batch_size 8 \
+--per_device_train_batch_size 32 \
+--per_device_eval_batch_size 32 \
 --gradient_accumulation_steps 1 \
 --evaluation_strategy "steps" \
 --eval_steps 200  \
