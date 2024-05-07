@@ -7,6 +7,8 @@ task_mapper = {
     'helpfulness': DemoProbInferenceForStyle,
     'stack_qa': DemoProbInferenceForStyle,
     'hh_rlhf': DemoProbInferenceForStyle,
+    'cog_reframe_positive_paired_data': DemoProbInferenceForStyle,
+    "wiki2_nontoxic_paired_data":DemoProbInferenceForStyle,
 }
 
 

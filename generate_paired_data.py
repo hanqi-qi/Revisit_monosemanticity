@@ -6,6 +6,8 @@ import json
 from utils import reward_utils
 from utils.reward_utils import load_pipe
 from utils import args_utils
+from tqdm import tqdm
+import random
 
 
 def clean_text(text):
@@ -15,7 +17,8 @@ def clean_text(text):
     return text
 
 
-def generate_pairdata(dataset):
+def generate_pairdata(dataset,reward):
+    print(f"generating paired data for {dataset}")
     if dataset == "stack_qa": 
         """if no paired data avaliable, randomly sample from predictions and use reward model to annotate"""
         reward = "r1_r2"
@@ -58,7 +61,7 @@ def generate_pairdata(dataset):
         paired_data = {"question":q,"response1":r1,"response2":r2,"r1_score1":multi_reward_r1[reward_model_names[0]],"r1_s2":multi_reward_r1[reward_model_names[1]],"r2_s1":multi_reward_r2[reward_model_names[0]],"r2_s2":multi_reward_r2[reward_model_names[1]]}
     
     elif dataset == "hh_rlhf":
-        print("generating paired data for hh_rlhf")
+        
         reward = "harmless"#or harmless
         file_path = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/hh/hh-rlhf/{reward}-online/test.jsonl" if reward == "helpful" else f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/hh/hh-rlhf/{reward}-base/test.jsonl"
         querys, chosens, rejects = [],[],[]
@@ -80,6 +83,29 @@ def generate_pairdata(dataset):
                     rejects.append(reject_temp)
         assert len(querys) == len(chosens) == len(rejects)
         paired_data = {"question":querys,"chosen":chosens,"reject":rejects}
+    elif dataset == "cog_reframe":
+        content = pd.read_csv("/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/cog_reframe/cog_reframe_positive.csv")
+        reward = "positive"
+        querys = content["situation"].tolist()
+        thought = content["thought"].tolist()
+        reframe = content["reframe"].tolist()
+        assert len(querys) == len(thought) == len(reframe)
+        paired_data = {"question":querys,"reject":thought,"chosen":reframe}
+    elif dataset == "toxicity":
+        data_dir = os.path.join("/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/", "toxicity_pairwise")
+        filenames = [os.path.join(data_dir, filename) for filename in os.listdir(data_dir) if filename.endswith(".jsonl")]
+        data = []
+        for filename in tqdm(filenames):
+            with open(filename, "r") as file_p:
+                file_data = file_p.readlines()
+            data.extend(file_data)
+        querys,pos_inputs, neg_inputs = [],[],[]
+        for idx in range(len(data)): #24376
+            x = json.loads(data[idx].strip())
+            querys.append(x["prompt_text"])
+            pos_inputs.append(x["unpert_gen_text"])
+            neg_inputs.append(x["pert_gen_text"])
+        paired_data = {"question":querys,"reject":neg_inputs,"chosen":pos_inputs}
     paired_data = pd.DataFrame(paired_data)
     paired_data.to_csv(f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/{dataset}_{reward}_paired_data.csv")
     print(f"Save {len(paired_data)} paired samples for {dataset}-{reward} locally")
@@ -91,11 +117,11 @@ def filter_demo(pair_data):
     return pair_data
 
 if __name__ == "__main__":
-    dataset = "hh_rlhf" #assistant;"hh_rlhf"
-    reward = "harmless" #harmless;"helpful
-    paired_data_filename = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/{dataset}_{reward}_paired_data_tmp.csv"
+    dataset = "toxicity" #assistant/hh_rlhf/cog_reframe
+    reward = "nontoxic" #harmless/helpful/
+    paired_data_filename = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/{dataset}_{reward}_paired_data.csv"
     if os.path.isfile(paired_data_filename):
         paired_data= pd.read_csv(paired_data_filename)
         filter_demo(paired_data)
     else:
-        generate_pairdata(dataset)
+        generate_pairdata(dataset,reward)

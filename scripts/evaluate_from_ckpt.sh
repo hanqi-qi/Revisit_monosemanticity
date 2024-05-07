@@ -1,34 +1,34 @@
 #!/bin/bash
-
-python train_dpo.py \
+python evaluate_from_ckpt.py \
 --model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-hf" \
+--policy_paths "/scratch/prj/lmrep/hanqi/attribute_edit/results/single_dpo/hh_helpful/checkpoint-900" \
 --dataset_name 'hh_rlhf_helpful_paired_data' \
 --eval_dataset 'hh_rlhf_helpful_paired_data' \
---reward_types 'relatedness' \
+--reward_types 'alignment' \
 --user_tag '[INST]' \
---assistant_tag '#Response:' \
---pos_type 'a non-toxic' \
---neg_type 'an aggressive' \
+--assistant_tag 'Thought:' \
+--pos_type 'a positive' \
+--neg_type 'a negative' \
 --control_template "Give {type} answer." \
 --target_layers "10,12,14,16,18,20" \
---do_eval \
 --lorra_alpha 5 \
 --lorra_beta 0 \
 --lora_r 8 \
 --lora_alpha 16 \
 --lora_dropout 0.05 \
---output_dir ./results/single_dpo/hh_helpful \
+--output_dir ./results/multi_dpo_Wosparse_WoType_WoRefer_gate_down/ \
 --overwrite_output_dir \
 --num_train_epochs 50 \
 --bf16 True \
 --evaluate_nums 200 \
---per_device_train_batch_size 8 \
---per_device_eval_batch_size 8 \
+--reference_free False \
+--per_device_train_batch_size 16 \
+--per_device_eval_batch_size 16 \
 --gradient_accumulation_steps 1 \
 --evaluation_strategy "steps" \
---eval_steps 200  \
+--eval_steps 500  \
 --save_strategy "steps" \
---save_steps 150 \
+--save_steps 200 \
 --learning_rate 3e-4 \
 --weight_decay 0. \
 --lr_scheduler_type "constant" \

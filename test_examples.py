@@ -11,14 +11,45 @@ from tqdm import tqdm
 MIN_SIZE = 10
 MAX_SIZE_NEWS = 1500
 
+def load_demo(dataset,num=5):
+    querys,responses,labels = load_queries(dataset,split="train")
+    demos = []
+    for i in range(num):
+        demos.append((responses['neg_inputs'][i], responses['pos_inputs'][i]))
+    print(f"retrieved {len(demos)} pairs from {dataset}")
+    return demos
+
 def load_queries(dataset,split="train"):
     responses = []
+    print(f"Load from local files-{dataset}-{split}")
     if dataset == "toxicity":
         # toxicity_queries = load_dataset("s-nlp/paradetox")["train"]
         # positive_queries = toxicity_queries["en_toxic_comment"][5:]
         # negative_queries = toxicity_queries["en_neutral_comment"][5:]
         data = load_dataset("s-nlp/paradetox")["train"]
         querys = data["en_toxic_comment"][5:]
+    elif dataset == "toxicity_prompt":
+        querys = []
+        responses = {"pos_inputs": [], "neg_inputs": []}
+        data = open("/scratch/prj/lmrep/hanqi/dpo_toxic/data/intervene_data/challenge_prompts_dev.jsonl").readlines()
+        for idx in range(len(data)):
+            querys.append(json.loads(data[idx].strip())["prompt"])
+    elif "paired_data" in dataset:
+        filename = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/paired_data/{dataset}.csv"
+        content = pd.read_csv(filename)
+        querys = content["question"].tolist()
+        pos_res  = content["chosen"].tolist()
+        neg_res = content["reject"].tolist()
+        responses = {"pos_inputs":pos_res,"neg_inputs":neg_res}
+        valid_num = int(0.1*len(querys))
+        valid_num =  min(valid_num,200)
+        if split == "train":
+            querys = querys[:-valid_num]
+            responses = {"pos_inputs":pos_res[:-valid_num],"neg_inputs":neg_res[:-valid_num]}
+        elif split == "valid":
+            querys = querys[-valid_num:]
+            responses = {"pos_inputs":pos_res[-valid_num:],"neg_inputs":neg_res[-valid_num:]}
+        print(f"generating {len(querys)} samples for {split} in {dataset}")
     elif dataset == "truthfulqa":
         dataset = load_dataset('truthful_qa', 'generation')['validation']
         querys = dataset['question']
@@ -75,12 +106,11 @@ def load_queries(dataset,split="train"):
     elif "hh_rlhf" in dataset:
         filename = "/scratch/prj/cllm/datasets/hh_rlhf/test_deduplicate.csv"
         if os.path.isfile(filename):
-            print(f"Load from local files-{dataset}")
             contents = pd.read_csv(filename)
             querys = contents["query"].tolist()
             response1 = contents["chosen"].tolist()
             response2 = contents["rejected"].tolist()
-            responses = response1
+            responses = {"pos_inputs":response1,"neg_inputs":response2}
             # responses = [r1 + "<SPLIT>"+ r2 for r1,r2 in zip(response1,response2)]
         else:
             print("Load from huggingface")

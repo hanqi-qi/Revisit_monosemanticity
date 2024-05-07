@@ -38,7 +38,8 @@ val_datasets = {
 # "arc-e": load_arc_sentences(),
 # "toxicity_pair": load_queries('toxicity_pair',split="valid")
 # "hh_rlhf": load_queries("hh_rlhf",split="valid")
-"truthfulqa":load_queries("truthfulqa",split="valid")
+# "truthfulqa":load_queries("truthfulqa",split="valid")
+"cog_reframe_positive_paired_data":load_queries("cog_reframe_positive_paired_data",split="valid")
 }
 
 def clean_text(responses):
@@ -57,13 +58,14 @@ def evaluate(eval_dataset = val_datasets, ignore_keys=None, sanity_check=False,r
         with torch.no_grad():
             querys = questions[:evaluate_nums]
             # output_file = 'results/lorra_llama7b/tatsu-lab/alpaca/lorra_base_1713798072_paraphrase.jsonl_paraphrase.json'
-            output_file = 'results/lorra_llama7b/tatsu-lab/alpaca/lorra_base_1713798072_paraphrase.jsonl_paraphrase.json'
+            output_file = '/scratch/prj/lmrep/hanqi/attribute_edit/results/llama-2-7b/cog_reframe_positive_paired_data/ICL_wICV.json'
             responses = json.load(open(output_file))['responses']
-            responses = clean_text(responses)
-            output_file = '/scratch/prj/lmrep/hanqi/attribute_edit/results/lorra_llama7b/tatsu-lab/alpaca/lorra_base_1713884556_paraphrase.jsonl_paraphrase.json'
-            querys = json.load(open(output_file))['responses']
-            querys = clean_text(querys)
-            assert len(querys) == len(responses)
+            # responses = clean_text(responses)
+            # output_file = '/scratch/prj/lmrep/hanqi/attribute_edit/results/lorra_llama7b/tatsu-lab/alpaca/lorra_base_1713884556_paraphrase.jsonl_paraphrase.json'
+            querys = json.load(open(output_file))['querys']
+            # querys = clean_text(querys)
+            # assert len(querys) == len(responses)
+            answers = None
             metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",references=answers,verbose=True)
         print(metrics)
 

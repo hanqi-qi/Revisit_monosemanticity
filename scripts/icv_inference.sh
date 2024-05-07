@@ -1,9 +1,10 @@
 python3 icv_inference.py \
---dataset hh_rlhf \
+--dataset hh_rlhf_helpful_paired_data \
 --model_type llama-2 \
 --model_size "7b" \
 --start_id 0 \
---end_id 200 \
+--end_id 60 \
 --prompt_type default \
---reward_types hh_rlhf_helpful \
---generate_woICV True \
+--reward_types None \
+--generate_woICV False \
+--generate_ICV True \

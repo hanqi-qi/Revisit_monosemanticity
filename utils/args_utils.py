@@ -52,12 +52,12 @@ class DefaultArgs:
         "Ray2333/gpt2-large-helpful-reward_model"
     ]
     
-    # reward_models_paraphrase = ["sentence-transformers/paraphrase-MiniLM-L6-v2"] #cosine similarity
-    reward_models_paraphrase = ["gpt35-turbo/paraphrase"] #cosine similarity
+    reward_models_related = ["sentence-transformers/paraphrase-MiniLM-L6-v2"] #cosine similarity
+    reward_models_alignment = ["gpt35-turbo"] #cosine similarity
     reward_model_simplicity = ["gpt35-turbo/simiplicity-classifier"]
     reward_model_helpfulness = ["OpenAssistant/oasst-rm-2-pythia-6.9b-epoch-1"]
 
-    reward_models = {"toxicity": reward_models_toxicity,"sentiment": reward_models_sentiment,"simplicity": reward_model_simplicity,"relatedness": reward_models_paraphrase,"helpfulness":reward_model_helpfulness,"stack_qa":reward_models_stackqa,"hh_rlhf_helpful":reward_models_assistant_helpfulness,'paraphrase':reward_models_paraphrase}
+    reward_models = {"toxicity": reward_models_toxicity,"sentiment": reward_models_sentiment,"simplicity": reward_model_simplicity,"relatedness": reward_models_related,"helpfulness":reward_model_helpfulness,"stack_qa":reward_models_stackqa,"hh_rlhf_helpful":reward_models_assistant_helpfulness,'alignment':reward_models_alignment}
     
 def get_args_ppo(default_args):
     parser = argparse.ArgumentParser(
@@ -79,6 +79,7 @@ def get_args_ppo(default_args):
     parser.add_argument('--seed', type=int,default=0)
     parser.add_argument('--gpus', type=int,default=1)
     parser.add_argument('--alpha', type=float,default=1.0)
+    parser.add_argument('--generate_ICV', type=str,default="False")
     parser.add_argument('--generate_woICV', type=str,default="False")
     parser.add_argument('--start_id', type=int,default=0,help="")
     parser.add_argument('--end_id', type=int,default=20)

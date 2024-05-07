@@ -1,9 +1,10 @@
 #!/bin/bash
 
-python train_dpo.py \
+python llama_chat_attri.py \
 --model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-hf" \
---dataset_name 'hh_rlhf_helpful_paired_data' \
---eval_dataset 'hh_rlhf_helpful_paired_data' \
+--dataset_name 'wiki2_nontoxic_paired_data' \
+--eval_dataset 'wiki2_nontoxic_paired_data' \
+--use_label 'True' \
 --reward_types 'relatedness' \
 --user_tag '[INST]' \
 --assistant_tag '#Response:' \

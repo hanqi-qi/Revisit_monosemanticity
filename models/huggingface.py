@@ -30,7 +30,7 @@ def build_model_signature(model_type, model_size, instruct=''):
     if model_type == 'llama-2':
         if model_size == "7b":
             # return f"/scratch/prj/inf_llmcache/hf_cache/models--meta-llama--Llama-2-7b-chat-hf/snapshots/c1b0db933684edbfe29a06fa47eb19cc48025e93"
-            return f"/scratch/prj/lmrep/llama2_model/Llama-2-7b-hf"
+            return f"/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf"
         elif model_size == "13b":
             return f"/scratch/prj/lmrep/hanqi/llama/llama-2-13b"
         

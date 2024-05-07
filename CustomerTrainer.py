@@ -34,6 +34,7 @@ import torch
 import torch.nn.functional as F
 from torch.nn import KLDivLoss
 from models.model_generate import model_generate_once
+from models.llama_hook import get_feas_by_hook
 from utils import reward_utils
 from lora_attribute.train_val_datasets import AlpacaSupervisedDataset, load_tqa_sentences, load_arc_sentences, get_logprobs_accuracy,get_model_responses
 import pickle
@@ -49,7 +50,8 @@ from lora_attribute.args import (
 from transformers.utils import logging
 logging.set_verbosity(transformers.logging.ERROR)
 
-GPT2_PAD_IDX = 50256
+# GPT2_PAD_IDX = 50256
+LLAMA_PAD_IDX = 2
 parser = transformers.HfArgumentParser(
     (ModelArguments, TrainingArguments, LoraArguments, LorraArguments)
 )
@@ -71,9 +73,9 @@ def get_last_token_logits(self,input_rep,input_ids):
     last_token_representations = torch.gather(input_rep, 1, gather_indices.unsqueeze(-1).expand(-1, -1, input_rep.size(-1)))
     return last_token_representations.squeeze(1)
 
-def compute_unsupervised_loss(self,model, inputs,reference_model, target_layers, alpha, beta, max_res_len=64, return_outputs=False, **kwargs):
-    self.max_res_len = max_res_len
-    self.max_inst_len = inputs["input_ids"][0].shape[1] - max_res_len
+def compute_unsupervised_loss(self,model, inputs,reference_model, target_layers, alpha, beta, training_args, return_outputs=False, **kwargs):
+    self.max_res_len = training_args.response_max_len
+    self.max_inst_len = inputs["input_ids"][0].shape[1] - self.max_res_len
     input_ids = inputs.get("input_ids")
     attention_mask = inputs.get("attention_mask")
 
@@ -169,18 +171,19 @@ def concatenated_inputs(
     
     concatenated_batch = {}
     concatenated_batch["input_ids"] = torch.zeros((batch["input_ids"].shape[0]*2,max_length), dtype=torch.long)
-    concatenated_batch["input_ids"][0::2] = batch["input_ids"][:,0,:]
-    concatenated_batch["input_ids"][1::2] = batch["input_ids"][:,1,:]
+    concatenated_batch["input_ids"][0:batch["input_ids"].shape[0]:,:] = batch["input_ids"][:,0,:]
+    concatenated_batch["input_ids"][batch["input_ids"].shape[0]:,:] = batch["input_ids"][:,1,:]
     
     concatenated_batch["attention_mask"] = torch.zeros((2*batch["attention_mask"].shape[0], max_length))
-    concatenated_batch["attention_mask"][0::2] = batch["attention_mask"][:,0,:]
-    concatenated_batch["attention_mask"][1::2] = batch["attention_mask"][:,1,:]
+    concatenated_batch["attention_mask"][0:batch["input_ids"].shape[0]:,:] = batch["attention_mask"][:,0,:]
+    concatenated_batch["attention_mask"][batch["input_ids"].shape[0]:,:] = batch["attention_mask"][:,1,:]
     return concatenated_batch
 
 def get_batch_logps(
     logits: torch.FloatTensor,
     input_ids: torch.FloatTensor,
     average_log_prob: bool = False,
+    max_prompt_len: int = 128,
 ) -> torch.FloatTensor:
     """
     Compute the log probabilities of the given labels under the given logits.
@@ -199,33 +202,36 @@ def get_batch_logps(
         probabilities of the given labels under the given logits.
     """
     # [batch, seq]
-    labels = input_ids[:, 1:].clone()
-    logits = logits[:, :-1, :]
-    loss_mask = labels != GPT2_PAD_IDX
+    labels = input_ids[:, max_prompt_len+1:].clone()
+    logits = logits[:, max_prompt_len:-1, :]
+    loss_mask = labels != LLAMA_PAD_IDX
 
     # dummy token; we'll ignore the losses on these tokens later
-    labels[labels == GPT2_PAD_IDX] = 0
+    labels[labels == LLAMA_PAD_IDX] = 0
 
     per_token_logps = torch.gather(
         logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)
-    ).squeeze(2)
+    ).squeeze(2)#select the probability of the target token in input_ids
 
     if average_log_prob:
         return (per_token_logps * loss_mask).sum(-1) / loss_mask.sum(-1)
     else:
-        return (per_token_logps * loss_mask).sum(-1)
+        return (per_token_logps * loss_mask).sum(-1) #[bsz]
 
-def concatenated_forward(model,inputs):
+def concatenated_forward(model,inputs,max_prompt_len):
     concatenated_batch = concatenated_inputs(inputs)
+    
     all_logits = model(
         concatenated_batch["input_ids"].to(model.device),
         attention_mask=concatenated_batch["attention_mask"].to(model.device),
-        ).logits.to(torch.float32)
+        ).logits.to(torch.float32)#[2*bs,seqlen,vocab_size]
+    
     all_logps = get_batch_logps(
             all_logits,
             concatenated_batch["input_ids"].to(model.device),
             average_log_prob=False,
-        )
+            max_prompt_len=max_prompt_len,
+        )#[2*bsz], sum of the probs of the target token in input_ids
     num_pos_samples = inputs["input_ids"].shape[0]
     pos_logps = all_logps[:num_pos_samples]
     neg_logps = all_logps[num_pos_samples:]
@@ -244,8 +250,8 @@ def dpo_loss_fn(
     pi_logratios = policy_pos_logps - policy_neg_logps
     ref_logratios = ref_pos_logps - ref_neg_logps
 
-    if reference_free:
-        ref_logratios = 0
+    # if reference_free:
+    ref_logratios = 0
 
     logits = pi_logratios - ref_logratios
 
@@ -254,7 +260,7 @@ def dpo_loss_fn(
     neg_rewards = beta * (policy_neg_logps - ref_neg_logps).detach()
 
     return losses, pos_rewards, neg_rewards
-
+        
 def get_kl_div(
     kl_criterion: KLDivLoss,
     pos_pi_logits: torch.FloatTensor,  # [batch, seq, vocab]
@@ -285,19 +291,20 @@ def get_kl_div(
     return pos_kl_div, neg_kl_div
 
 
-def compute_contrastive_loss(self,model, inputs, reference_model, target_layers, alpha, beta, max_res_len=64, return_outputs=False, **kwargs):
+def compute_contrastive_loss(self,model, inputs, reference_model, target_layers, alpha, beta, training_args, return_outputs=False, **kwargs):
     
     self.kl_criterion = KLDivLoss(reduction="none", log_target=True)
     
     train_test = "train"
     kl_loss = None
+    fea_hooks = get_feas_by_hook(model,target_acts=["mlp.up_proj"],target_layers=[31])
     
     (
     policy_pos_logps,
     policy_neg_logps,
     policy_pos_logits,
     policy_neg_logits,
-    ) = concatenated_forward(model, inputs)
+    ) = concatenated_forward(model, inputs,training_args.prompt_max_len)
     
     with torch.no_grad():
         (
@@ -305,7 +312,7 @@ def compute_contrastive_loss(self,model, inputs, reference_model, target_layers,
         ref_neg_logps,
         ref_pos_logits,
         ref_neg_logits,
-        ) = concatenated_forward(self.reference_model, inputs)
+        ) = concatenated_forward(self.reference_model, inputs,training_args.prompt_max_len)
         
     losses, pos_rewards, neg_rewards = dpo_loss_fn(
         policy_pos_logps,
@@ -314,19 +321,28 @@ def compute_contrastive_loss(self,model, inputs, reference_model, target_layers,
         ref_neg_logps,
         beta = training_args.beta,
         reference_free = training_args.reference_free,
-    )
+    )#[policy_pos_logps - ref_pos_logps]
+    
     pos_kl_div, neg_kl_div = get_kl_div(
         self.kl_criterion,
         policy_pos_logits,
         policy_neg_logits,
         ref_pos_logits,
         ref_neg_logits,
-    )
+    )#generate similar positive/negative outputs as reference model
+
+    tmp_sparse_loss = 0
+    for act_nlayer in fea_hooks["mlp.up_proj"]:
+        tmp_sparse_loss += torch.mean(torch.sum(torch.abs(act_nlayer.fea[:,-1,:]), dim=-1),dim=0)
+    
+    
     
     metrics = {}
     if training_args.kl_gamma > 0:
         kl_loss = training_args.kl_gamma * (pos_kl_div + neg_kl_div)
         losses += kl_loss
+    if training_args.sparse_lambda > 0:
+        losses += training_args.sparse_lambda * tmp_sparse_loss
 
     reward_accuracies = (pos_rewards > neg_rewards).float()
     
@@ -365,25 +381,20 @@ def compute_contrastive_loss(self,model, inputs, reference_model, target_layers,
         avg_metrics = {}
         for key,item in metrics.items():
             avg_metrics[key] = sum(item)/len(item)
-    #     step = int(self.state.global_step/self.args.logging_steps)
-    #     metric_value = sum(metrics["rewards_train/margins"])/len(metrics["rewards_train/margins"])
-    #     print(step,self.state.global_step,metric_value)
-    #     wandb.log({"pos_reward":metric_value,"neg_reward":sum(metrics["rewards_train/negative"])/len(metrics["rewards_train/negative"])})
         wandb.log(avg_metrics)
     del policy_pos_logps, policy_neg_logps, policy_pos_logits, policy_neg_logits,ref_pos_logps, ref_neg_logps, ref_pos_logits, ref_neg_logits,pos_rewards,kl_loss,neg_kl_div,pos_kl_div,inputs
     return (losses.mean(), metrics) if return_outputs else losses.mean()
 
  
-def compute_loss(self, model, inputs, reference_model,target_layers, alpha, beta, max_res_len=64, return_outputs=False, **kwargs):
+def compute_loss(self, model, inputs, reference_model,target_layers, alpha, beta, training_args, return_outputs=False, **kwargs):
     self.reference_model = reference_model
     if inputs["input_ids"].shape[1] == 2: #for contrastive dpo training iwth paired data
-        outputs = compute_contrastive_loss(self,model, inputs, reference_model, target_layers, alpha, beta, max_res_len=64, return_outputs=False, **kwargs)
+        outputs = compute_contrastive_loss(self,model, inputs, reference_model, target_layers, alpha, beta, training_args=training_args, return_outputs=False, **kwargs)
     else:
-        outputs = compute_unsupervised_loss(self,model, inputs, reference_model, target_layers, alpha, beta, max_res_len=64, return_outputs=False, **kwargs)
+        outputs = compute_unsupervised_loss(self,model, inputs, reference_model, target_layers, alpha, beta, training_args, return_outputs=False, **kwargs)
     return outputs
 
-# print("building reference model")
-if training_args.policy_paths is None and training_args.dataset_name == "toxicitty_pair":
+if training_args.reference_free is False:
     reference_model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -396,13 +407,16 @@ else:
     print("Reference model is not Required!")
     reference_model = None
 
+
 val_datasets = {
 # "tqa": load_tqa_sentences(lorra_args.user_tag, lorra_args.assistant_tag),
 # "arc-e": load_arc_sentences(),
-# "toxicity_pair": load_queries('toxicity_pair',split="valid")
-# "hh_rlhf": load_queries("hh_rlhf",split="valid")
-"truthfulqa":load_queries("truthfulqa",split="valid")
+# "wiki2_nontoxic_paired_data": load_queries('wiki2_nontoxic_paired_data',split="valid"),
+# "hh_rlhf_helpful_paired_data": load_queries("hh_rlhf_helpful_paired_data",split="valid"),
+# "truthfulqa":load_queries("truthfulqa",split="valid")
+"cog_reframe_positive_paired_data":load_queries("cog_reframe_positive_paired_data",split="valid"),
 }
+# val_datasets = ["wiki2_nontoxic_paired_data","cog_reframe_positive_paired_data","hh_rlhf_helpful_paired_data"]
 
 class CustomTrainer(Trainer):
         
@@ -414,7 +428,7 @@ class CustomTrainer(Trainer):
                             target_layers=lorra_target_layers, 
                             alpha=lorra_args.lorra_alpha, 
                             beta=lorra_args.lorra_beta, 
-                            max_res_len=lorra_args.max_res_len,
+                            training_args=training_args,
                             return_outputs=return_outputs)
     
     def evaluate(self, eval_dataset = val_datasets, ignore_keys=None, sanity_check=False,reward_types=training_args.reward_types, evaluate_nums = training_args.evaluate_nums,bsz=training_args.per_device_eval_batch_size, **kwargs):
@@ -424,6 +438,7 @@ class CustomTrainer(Trainer):
         if sanity_check:
             print('Sanity check ...')
         metrics = {}
+        # eval_dataset = [val_datasets[training_args.eval_dataset]]
         for val_set in eval_dataset:
             questions, answers, labels = eval_dataset[val_set]
             print(f'Evaluating {val_set} on {evaluate_nums} samples with {bsz} BSZ...')
@@ -439,8 +454,8 @@ class CustomTrainer(Trainer):
                     print(len(responses))
                     step = str(time.time()).split(".")[0]
                     querys = None if reward_types[0] == "paraphrase" else querys
-                    metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",references=answers,verbose=False)
-                    reward_utils.save_results(output_dir, [metrics], questions[:len(responses)], responses, reward_types, f"lorra_base_{step}_{reward_types[0]}.jsonl")
+                    metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",references=answers["pos_inputs"],verbose=False)
+                    reward_utils.save_results(output_dir, metrics, questions[:len(responses)], responses, reward_types, f"lorra_base_{step}_{reward_types[0]}")
                     #  metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",references=answers,verbose=True)
             wandb.log(metrics)
         self.model.train()

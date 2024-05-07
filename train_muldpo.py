@@ -15,9 +15,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import time
 from transformers.integrations import WandbCallback
+from llama_hook_test import Llama7BHelper
 
 from dataclasses import dataclass, field
 import logging
@@ -33,7 +34,6 @@ import transformers
 from transformers import Trainer, BitsAndBytesConfig
 import torch
 from models.model_generate import model_generate_once
-from models.llama_hook import get_feas_by_hook
 from utils import reward_utils
 from lora_attribute.train_val_datasets import AlpacaSupervisedDataset
 from test_examples import load_queries
@@ -181,11 +181,11 @@ def train():
         tokenizer.pad_token = tokenizer.unk_token
         print("Policy model Loaded!")
     train_dataset = AlpacaSupervisedDataset(tokenizer=tokenizer, num_examples=99999, lorra_args=lorra_args,training_args=training_args)
+    
     trainer = CustomTrainer(
         model=policy_model, tokenizer=tokenizer, args=training_args, train_dataset=train_dataset
     )
     policy_model.config.use_cache = False
-    # Instantiate the new logging callback, passing it the Trainer object
     evals_callback = WandbCallback()
 
     # Add the callback to the Trainer

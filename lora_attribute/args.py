@@ -46,6 +46,14 @@ class TrainingArguments(transformers.TrainingArguments):
         default=512,
         metadata={"help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."},
     )
+    prompt_max_len: int = field(
+        default=128,
+        metadata={"help": "Maximum sequence length for prompt"},
+    )
+    response_max_len: int = field(
+        default=128,
+        metadata={"help": "Maximum sequence length for prompt"},
+    )
     grouped_to_max_length: bool = field (
         default=False, metadata={"help": "Group to chunks of max length for pretraining"}
     )
@@ -55,6 +63,11 @@ class TrainingArguments(transformers.TrainingArguments):
     dataset_name: str = field(
         default = "toxicity_pair",
         metadata={"help": "Dataset name"}
+    )
+    
+    eval_dataset: str = field(
+        default = "cog_reframe_positive",
+        metadata={"help": "Evaluation dataset name"}
     )
     
     reward_types: typing.List[str] = field(
@@ -67,7 +80,7 @@ class TrainingArguments(transformers.TrainingArguments):
     )
 
     kl_gamma: float = field(
-        default = 0.0,
+        default = 0.1,
         metadata={"help": "KL annealing gamma"}
     )
     
@@ -76,7 +89,17 @@ class TrainingArguments(transformers.TrainingArguments):
         metadata={"help": "Beta for reward shaping"}
     )
     
+    sparse_lambda: float = field(
+        default = 0.0,
+        metadata={"help": "Sparsity lambda"}
+    )
+    
     reference_free: bool = field(
         default = False,
         metadata={"help": "Reference free reward"}
+    )
+    
+    use_label: str = field(
+        default = "False",
+        metadata={"help": "use labelled data for Classifier"}
     )
