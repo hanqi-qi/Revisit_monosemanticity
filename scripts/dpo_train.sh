@@ -1,10 +1,11 @@
 #!/bin/bash
 
 python train_dpo.py \
---model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-hf" \
+--model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf" \
 --dataset_name 'hh_rlhf_helpful_paired_data' \
 --eval_dataset 'hh_rlhf_helpful_paired_data' \
---reward_types 'relatedness' \
+--reward_types 'alignment' \
+--use_label 'False' \
 --user_tag '[INST]' \
 --assistant_tag '#Response:' \
 --pos_type 'a non-toxic' \
@@ -23,10 +24,10 @@ python train_dpo.py \
 --bf16 True \
 --evaluate_nums 200 \
 --per_device_train_batch_size 8 \
---per_device_eval_batch_size 8 \
+--per_device_eval_batch_size 16 \
 --gradient_accumulation_steps 1 \
 --evaluation_strategy "steps" \
---eval_steps 200  \
+--eval_steps 50  \
 --save_strategy "steps" \
 --save_steps 150 \
 --learning_rate 3e-4 \

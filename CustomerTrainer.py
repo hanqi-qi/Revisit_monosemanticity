@@ -27,7 +27,7 @@ import json
 import gc
 from typing import Dict, Optional, Sequence, Union, List, Tuple
 
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from utils.prompt import hf_template_dict, chat_template_dict, hf_split_tag, chat_split_tag
 import transformers
 from transformers import Trainer, BitsAndBytesConfig
 import torch
@@ -62,8 +62,13 @@ parser = transformers.HfArgumentParser(
     lorra_args,
 ) = parser.parse_args_into_dataclasses()
 
-output_dir = f"results/lorra_llama7b/{training_args.dataset_name}"
-os.makedirs(output_dir, exist_ok=True)
+training_args.model_signature = model_args.model_name_or_path.split("/")[-1]
+training_args.prompt_template_dict = chat_template_dict if "chat" in training_args.model_signature else hf_template_dict
+training_args.prompt_template = training_args.prompt_template_dict[training_args.dataset_name]
+training_args.split_tag = chat_split_tag[training_args.dataset_name] if "chat" in training_args.model_signature else hf_split_tag[training_args.dataset_name]
+    
+result_output_dir = f"results/{training_args.model_signature}/{training_args.dataset_name}"
+os.makedirs(result_output_dir, exist_ok=True)
     
 lorra_target_layers = [int(layer) for layer in lorra_args.target_layers.split(",")]
 
@@ -290,6 +295,9 @@ def get_kl_div(
     )
     return pos_kl_div, neg_kl_div
 
+def compute_sft_loss(self,model, inputs, reference_model, target_layers, alpha, beta, training_args, return_outputs=False, **kwargs):
+    loss = model(inputs).loss
+    return loss
 
 def compute_contrastive_loss(self,model, inputs, reference_model, target_layers, alpha, beta, training_args, return_outputs=False, **kwargs):
     
@@ -331,6 +339,15 @@ def compute_contrastive_loss(self,model, inputs, reference_model, target_layers,
         ref_neg_logits,
     )#generate similar positive/negative outputs as reference model
 
+
+    
+    #Enumerate sinle dataset, see the task/performance on different layers/dimension.
+    #guassian process->Bayesian optimization->randomly select one and record the results, and another one, compare the two results, and search around the better one. [efficiecy and uncertainty]
+    #hyper-network, NAS, select from the 
+    
+    # Tricks:
+    # (1) counterfatual-attention > random attention.
+    # (2) Critic to evaluate the reward 不如 spervised 
     tmp_sparse_loss = 0
     for act_nlayer in fea_hooks["mlp.up_proj"]:
         tmp_sparse_loss += torch.mean(torch.sum(torch.abs(act_nlayer.fea[:,-1,:]), dim=-1),dim=0)
@@ -388,10 +405,12 @@ def compute_contrastive_loss(self,model, inputs, reference_model, target_layers,
  
 def compute_loss(self, model, inputs, reference_model,target_layers, alpha, beta, training_args, return_outputs=False, **kwargs):
     self.reference_model = reference_model
-    if inputs["input_ids"].shape[1] == 2: #for contrastive dpo training iwth paired data
+    if training_args.train_schema == "dpo": #for contrastive dpo training iwth paired data
         outputs = compute_contrastive_loss(self,model, inputs, reference_model, target_layers, alpha, beta, training_args=training_args, return_outputs=False, **kwargs)
-    else:
+    elif training_args.train_schema == "unsupervised":
         outputs = compute_unsupervised_loss(self,model, inputs, reference_model, target_layers, alpha, beta, training_args, return_outputs=False, **kwargs)
+    elif training_args.train_schema == "sft":
+        outputs = compute_sft_loss(self,model, inputs, reference_model, target_layers, alpha, beta, training_args, return_outputs=False, **kwargs)
     return outputs
 
 if training_args.reference_free is False:
@@ -408,16 +427,6 @@ else:
     reference_model = None
 
 
-val_datasets = {
-# "tqa": load_tqa_sentences(lorra_args.user_tag, lorra_args.assistant_tag),
-# "arc-e": load_arc_sentences(),
-# "wiki2_nontoxic_paired_data": load_queries('wiki2_nontoxic_paired_data',split="valid"),
-# "hh_rlhf_helpful_paired_data": load_queries("hh_rlhf_helpful_paired_data",split="valid"),
-# "truthfulqa":load_queries("truthfulqa",split="valid")
-"cog_reframe_positive_paired_data":load_queries("cog_reframe_positive_paired_data",split="valid"),
-}
-# val_datasets = ["wiki2_nontoxic_paired_data","cog_reframe_positive_paired_data","hh_rlhf_helpful_paired_data"]
-
 class CustomTrainer(Trainer):
         
     def compute_loss(self, model, inputs, return_outputs=False):
@@ -431,32 +440,33 @@ class CustomTrainer(Trainer):
                             training_args=training_args,
                             return_outputs=return_outputs)
     
-    def evaluate(self, eval_dataset = val_datasets, ignore_keys=None, sanity_check=False,reward_types=training_args.reward_types, evaluate_nums = training_args.evaluate_nums,bsz=training_args.per_device_eval_batch_size, **kwargs):
+    def evaluate(self, ignore_keys=None, sanity_check=False,training_args=training_args, **kwargs):
         self.model.eval()
-        # del self.reference_model
+        bsz = training_args.per_device_eval_batch_size
+        reward_types = training_args.reward_types
+        evaluate_nums = training_args.evaluate_nums
+        split_tag = training_args.split_tag
         torch.cuda.empty_cache()
         if sanity_check:
             print('Sanity check ...')
         metrics = {}
-        # eval_dataset = [val_datasets[training_args.eval_dataset]]
-        for val_set in eval_dataset:
-            questions, answers, labels = eval_dataset[val_set]
-            print(f'Evaluating {val_set} on {evaluate_nums} samples with {bsz} BSZ...')
+        eval_dataset_names = training_args.eval_dataset
+        for val_set_name in eval_dataset_names:
+            questions, answers, labels = load_queries(val_set_name,split="valid")
+            print(f'Evaluating {val_set_name} on {evaluate_nums} samples with {bsz} BSZ...')
             with torch.no_grad():
                 if labels is not None:
                     #classification task
                     acc = get_logprobs_accuracy(self.model, self.tokenizer, questions, answers, labels, bsz)
-                    acc_key = 'acc' if val_set == 'tqa' else 'acc_norm'
-                    metrics[f"{val_set}_accuracy"] = acc[acc_key]
+                    acc_key = 'acc' if val_set_name == 'tqa' else 'acc_norm'
+                    metrics[f"{val_set_name}_accuracy"] = acc[acc_key]
                 else:
                     querys = questions[:evaluate_nums]
-                    responses = get_model_responses(self.model, self.tokenizer, querys,training_args.dataset_name, bsz)
+                    responses = get_model_responses(self.model, self.tokenizer,querys,val_set_name,training_args)
                     print(len(responses))
                     step = str(time.time()).split(".")[0]
-                    querys = None if reward_types[0] == "paraphrase" else querys
-                    metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",references=answers["pos_inputs"],verbose=False)
-                    reward_utils.save_results(output_dir, metrics, questions[:len(responses)], responses, reward_types, f"lorra_base_{step}_{reward_types[0]}")
-                    #  metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",references=answers,verbose=True)
+                    metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",dataset_name= val_set_name,references=None,verbose=False)
+                    reward_utils.save_results(result_output_dir, metrics, questions[:len(responses)], responses, reward_types, f"{training_args.model_signature}_{step}_{reward_types[0]}")
             wandb.log(metrics)
         self.model.train()
         print("===Eval results===")

@@ -1,9 +1,10 @@
 #!/bin/bash
 python evaluate_from_ckpt.py \
---model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-hf" \
---policy_paths "/scratch/prj/lmrep/hanqi/attribute_edit/results/single_dpo/hh_helpful/checkpoint-900" \
---dataset_name 'hh_rlhf_helpful_paired_data' \
---eval_dataset 'hh_rlhf_helpful_paired_data' \
+--model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf" \
+--policy_paths "/scratch/prj/lmrep/hanqi/attribute_edit/results/single_sft_customised_trl_actlayers_25-31/cog_reframe_positive_paired_data/checkpoint-100" \
+--act_layer "2" \
+--dataset_name 'cog_reframe_positive_paired_data' \
+--eval_dataset 'cog_reframe_positive_paired_data' \
 --reward_types 'alignment' \
 --user_tag '[INST]' \
 --assistant_tag 'Thought:' \

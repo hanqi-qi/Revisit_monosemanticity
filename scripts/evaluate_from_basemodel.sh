@@ -1,9 +1,9 @@
 #!/bin/bash
 
-CUDA_VISIBLE_DEVICES=5 python evaluate_from_ckpt.py \
---model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-hf" \
---dataset_name 'hh_rlhf_helpful_paired_data' \
---eval_dataset 'hh_rlhf_helpful_paired_data' \
+python evaluate_from_ckpt.py \
+--model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf" \
+--dataset_name 'challenge_toxicity' \
+--eval_dataset 'challenge_toxicity' \
 --reward_types 'alignment' \
 --user_tag '[INST]' \
 --assistant_tag 'Output:' \
@@ -41,4 +41,4 @@ CUDA_VISIBLE_DEVICES=5 python evaluate_from_ckpt.py \
 --report_to "wandb" \
 
 
-#dataset_name: 'wiki2_nontoxic_paired_data'/hh_rlhf_helpful_paired_data/cog_reframe_positive_paired_data
+#dataset_name: 'wiki2_nontoxic_paired_data'/hh_rlhf_helpful_paired_data/cog_reframe_positive_paired_data/challenge_toxicity

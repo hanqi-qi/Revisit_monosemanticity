@@ -1,11 +1,11 @@
 #!/bin/bash
 
-python llama_chat_attri.py \
+python train_sft.py \
 --model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf" \
---dataset_name 'refusal_paired_data' \
---eval_dataset 'refusal_paired_data' \
---use_label 'True' \
---reward_types 'relatedness' \
+--dataset_name 'hh_rlhf_helpful_paired_data' \
+--eval_dataset 'hh_rlhf_helpful_paired_data' \
+--reward_types 'alignment' \
+--use_label 'False' \
 --user_tag '[INST]' \
 --assistant_tag '#Response:' \
 --pos_type 'a non-toxic' \
@@ -18,29 +18,24 @@ python llama_chat_attri.py \
 --lora_r 8 \
 --lora_alpha 16 \
 --lora_dropout 0.05 \
---output_dir ./results/single_dpo/hh_helpful \
+--output_dir ./results/single_dpo_trl/hh_helpful \
 --overwrite_output_dir \
---num_train_epochs 50 \
+--num_train_epochs 10 \
 --bf16 True \
 --evaluate_nums 200 \
---per_device_train_batch_size 32 \
---per_device_eval_batch_size 32 \
+--per_device_train_batch_size 8 \
+--per_device_eval_batch_size 16 \
 --gradient_accumulation_steps 1 \
 --evaluation_strategy "steps" \
---eval_steps 200  \
+--eval_steps 100  \
 --save_strategy "steps" \
---save_steps 150 \
+--save_steps 100 \
 --learning_rate 3e-4 \
 --weight_decay 0. \
 --lr_scheduler_type "constant" \
 --logging_strategy "steps" \
 --logging_steps 50 \
 --tf32 True \
---model_max_length 128 \
 --q_lora False \
 --gradient_checkpointing True \
 --report_to "wandb" \
-
-
-#model /scratch/prj/lmrep/llama2_model/Llama-2-7b-hf /scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf
-#dataset_name: 'wiki2_nontoxic_paired_data'/hh_rlhf_helpful_paired_data/cog_reframe_positive_paired_data

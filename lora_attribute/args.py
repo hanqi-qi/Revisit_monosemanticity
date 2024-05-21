@@ -21,7 +21,7 @@ class LoraArguments:
     lora_alpha: int = 16
     lora_dropout: float = 0.05
     lora_target_modules: typing.List[str] = field(
-        default_factory=lambda: ["q_proj", "v_proj"]
+        default_factory=lambda: ["q_proj", "v_proj", "mlp.up_proj"]#set all target modules for LoRA
     )
     lora_weight_path: str = ""
     lora_bias: str = "none"
@@ -57,6 +57,8 @@ class TrainingArguments(transformers.TrainingArguments):
     grouped_to_max_length: bool = field (
         default=False, metadata={"help": "Group to chunks of max length for pretraining"}
     )
+    train_schema: str = field(  default="dpo", metadata={"help": "dpo or sft"} )
+    
     evaluate_nums: int = field (
         default=200, metadata={"help": "Number of evaluation samples"}
     )
@@ -65,9 +67,8 @@ class TrainingArguments(transformers.TrainingArguments):
         metadata={"help": "Dataset name"}
     )
     
-    eval_dataset: str = field(
-        default = "cog_reframe_positive",
-        metadata={"help": "Evaluation dataset name"}
+    eval_dataset: typing.List[str] = field(
+        default_factory=lambda: ["cog_reframe_positive_paired_data"]
     )
     
     reward_types: typing.List[str] = field(
@@ -85,7 +86,7 @@ class TrainingArguments(transformers.TrainingArguments):
     )
     
     beta: float = field(
-        default = 0.1,
+        default = 0.1,#0.5
         metadata={"help": "Beta for reward shaping"}
     )
     
@@ -99,7 +100,18 @@ class TrainingArguments(transformers.TrainingArguments):
         metadata={"help": "Reference free reward"}
     )
     
+    act_layers: str = field(
+        default="31",
+        metadata={"help": "layers applied iwth sparisty"}
+        
+    )
+    
     use_label: str = field(
         default = "False",
         metadata={"help": "use labelled data for Classifier"}
+    )
+
+    learning_rate: float = field(
+        default=5e-5, 
+        metadata={"help": "The initial learning rate for Adam."}
     )

@@ -1,9 +1,10 @@
-from datasets import load_dataset,ReadInstruction
+from datasets import load_dataset,load_from_disk
 import pandas as pd
 from attribute_data import emotion_dataset 
 import numpy as np
 import os
 import json
+import glob
 import random
 from tqdm import tqdm
 
@@ -19,6 +20,7 @@ def load_demo(dataset,num=5):
     print(f"retrieved {len(demos)} pairs from {dataset}")
     return demos
 
+
 def load_queries(dataset,split="train"):
     responses = []
     print(f"Load from local files-{dataset}-{split}")
@@ -28,7 +30,7 @@ def load_queries(dataset,split="train"):
         # negative_queries = toxicity_queries["en_neutral_comment"][5:]
         data = load_dataset("s-nlp/paradetox")["train"]
         querys = data["en_toxic_comment"][5:]
-    elif dataset == "toxicity_prompt":
+    elif dataset == "challenge_toxicity":
         querys = []
         responses = {"pos_inputs": [], "neg_inputs": []}
         data = open("/scratch/prj/lmrep/hanqi/dpo_toxic/data/intervene_data/challenge_prompts_dev.jsonl").readlines()
@@ -118,6 +120,28 @@ def load_queries(dataset,split="train"):
             querys = _build_rlhf_dataset(dataset_name=dataset_id,split="validation")
     return querys,responses,None
 
+def load_dpo_dataset(dataset):
+    if dataset != "all_paired_data":
+        all_paired_filename = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/paired_data/{dataset}.csv"
+    else:
+        path = r'/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/paired_data/multi_dataset' # use your path
+        all_files = glob.glob(os.path.join(path , "*.csv"))
+        li = []
+        for filename in all_files:
+            df = pd.read_csv(filename, index_col=None, header=0)
+            li.append(df)
+        frame = pd.concat(li, axis=0, ignore_index=True)
+        all_paired_filename = "/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/paired_data/multi_dataset/all_paired_data.csv"
+        shuffle_frame = frame.sample(frac=1)
+        shuffle_frame.to_csv(all_paired_filename)
+    full_dataset = load_dataset("csv", data_files=all_paired_filename)["train"]
+    DRATIO = 0.9
+    train_dataset = full_dataset.select(range(int(len(full_dataset)*DRATIO)))
+    eval_dataset = full_dataset.select(range(int(len(full_dataset)*DRATIO), len(full_dataset)))
+    train_dataset = train_dataset.rename_columns({"question":"prompt","reject":"rejected"})
+    eval_dataset = eval_dataset.rename_columns({"question":"prompt","reject":"rejected"})
+    return train_dataset,eval_dataset
+    
 def _build_rlhf_dataset(dataset_name, split="train", max_size=100):
 
     split = {"train": "train", "validation": "test"}[split]
