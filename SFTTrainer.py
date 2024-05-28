@@ -63,12 +63,12 @@ class CustomSFTrainer(SFTTrainer):
         return tmp_sparse_loss/len(fea_hooks["mlp.up_proj"])
     
     def compute_loss(self, model, inputs,return_outputs=False):
-        fea_hooks = get_feas_by_hook(model,target_acts=["mlp.up_proj"],target_layers=self.act_layers)
+        fea_hooks = get_feas_by_hook(model,target_acts=["mlp.up_proj"],target_layers=[31])
         outputs = model(**inputs)
         sft_loss = outputs.get("loss")
         sparsity_loss = self.sparisty_loss(fea_hooks)
         loss = sft_loss + self.sparsity_lambda*sparsity_loss
-        
+        # loss = sft_loss
         if self.state.global_step % self.args.logging_steps == 0:
             print(f"Step: {self.state.global_step}, SFT Loss: {sft_loss.item()}, Sparsity Loss: {sparsity_loss.item()}")
             loss_metrics = {"sft_loss": sft_loss.item(), "sparsity_loss": sparsity_loss.item()}

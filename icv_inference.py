@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import copy
 from tqdm import tqdm
-os.environ["CUDA_VISIBLE_DEVICES"] = "7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import torch
 
 from utils.common import setup_env
@@ -11,12 +11,13 @@ from models import  build_tokenizer, build_model, optimize_icv
 from tasks import load_task
 
 from models.model_utils import model_with_adapter, tokenize_each_demonstration
-from models.model_generate import model_generate_once, prepare_prompt_query
+from models.model_generate import model_generate_once
 
 from utils import args_utils,reward_utils
 
 from demos import demo_sentiment, demo_toxicity, demo_simplicity,demo_helpfulness,load_from_pairdata
 from test_examples import load_queries,load_demo
+from utils.prompt import hf_template_dict, chat_template_dict, hf_split_tag, chat_split_tag
 
 import transformers
 from transformers import logging
@@ -59,6 +60,9 @@ TaskHandler = load_task(args.dataset)
 task_agent = TaskHandler(args.prompt_version)
 task_agent.set_seed(args.seed)
 
+
+prompt_template = chat_template_dict[args.dataset] 
+
 if args.generate_woICV == "True":
     demo = []
     #Task1: paraphrase without the ICV
@@ -78,7 +82,9 @@ if args.generate_woICV == "True":
     responses = []
     try: 
         for qid,query in enumerate(querys):
-            query_prompt = prepare_prompt_query(tokenizer,query,gold_ans["neg_inputs"][qid],args.dataset,args.prompt_type)
+            prompt = prompt_template.format(instruction=query,response="")
+            query_prompt = tokenizer(prompt)
+            # query_prompt = prepare_prompt_query(tokenizer,query,gold_ans["neg_inputs"][qid],args.dataset,args.prompt_type)
             decoded_output = model_generate_once(model,tokenizer,query_prompt)
             responses.append(decoded_output.split("[/INST]")[1])
 
@@ -142,7 +148,8 @@ if args.generate_ICV == "True":
     print(f"Evaluation reward model(s) on {args.reward_types}")
     try:
         for qid,query in enumerate(querys):
-            query_prompt = prepare_prompt_query(tokenizer,query,gold_ans["neg_inputs"][qid],args.dataset,args.prompt_type)
+            prompt = prompt_template.format(instruction=query,response="")
+            query_prompt = tokenizer(prompt, return_tensors="pt", padding=True)
             decoded_output = model_generate_once(model,tokenizer,query_prompt)
             queries_responses.append([query,decoded_output])
             responses.append(decoded_output.split("[/INST]")[1])

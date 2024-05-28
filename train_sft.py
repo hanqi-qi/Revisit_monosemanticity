@@ -96,7 +96,7 @@ def train():
     training_args.split_tag = "[/INST]" if "chat" in model_signature else hf_split_tag[training_args.dataset_name]
     
     wandb.init(
-        # mode="disabled",
+        mode="disabled",
         # set the wandb project where this run will be logged
         project="my-awesome-project",
 

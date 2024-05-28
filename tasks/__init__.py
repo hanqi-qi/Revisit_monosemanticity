@@ -9,6 +9,7 @@ task_mapper = {
     'hh_rlhf': DemoProbInferenceForStyle,
     'cog_reframe_positive_paired_data': DemoProbInferenceForStyle,
     "wiki2_nontoxic_paired_data":DemoProbInferenceForStyle,
+    'sycophancy_ab_paired_data': DemoProbInferenceForStyle,
 }
 
 

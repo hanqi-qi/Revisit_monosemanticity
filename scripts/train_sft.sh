@@ -20,7 +20,7 @@ python train_sft.py \
 --lora_r 8 \
 --lora_alpha 16 \
 --lora_dropout 0.05 \
---output_dir ./results/single_${2}_customised_trl_actlayers_25-31/$1 \
+--output_dir ./results/single_${2}_customised_trl_${act_layers}/$1 \
 --overwrite_output_dir \
 --num_train_epochs 50 \
 --bf16 True \
@@ -29,14 +29,14 @@ python train_sft.py \
 --per_device_eval_batch_size 32 \
 --gradient_accumulation_steps 8 \
 --evaluation_strategy "steps" \
---eval_steps 50  \
+--eval_steps 20  \
 --save_strategy "steps" \
---save_steps 50 \
+--save_steps 20 \
 --learning_rate 3e-4 \
 --weight_decay 0. \
 --lr_scheduler_type "constant" \
 --logging_strategy "steps" \
---logging_steps 50 \
+--logging_steps 20 \
 --tf32 True \
 --q_lora False \
 --gradient_checkpointing True \

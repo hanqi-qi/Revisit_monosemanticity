@@ -117,8 +117,8 @@ def filter_demo(pair_data):
     return pair_data
 
 if __name__ == "__main__":
-    dataset = "toxicity" #assistant/hh_rlhf/cog_reframe
-    reward = "nontoxic" #harmless/helpful/
+    dataset = "sycophancy" #assistant/hh_rlhf/cog_reframe/sychophcy
+    reward = "agree" #harmless/helpful/
     paired_data_filename = f"/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/{dataset}_{reward}_paired_data.csv"
     if os.path.isfile(paired_data_filename):
         paired_data= pd.read_csv(paired_data_filename)

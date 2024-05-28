@@ -38,7 +38,7 @@ def evaluate(model=None,tokenizer=None,training_args={}):
     evaluate_nums = training_args.evaluate_nums
     bsz = training_args.per_device_eval_batch_size
     reward_types = training_args.reward_types
-    act_layer = training_args.act_layers[0]
+    act_layer = training_args.act_layers
     torch.cuda.empty_cache()
     eval_dataset_names = training_args.eval_dataset
     for val_set_name in eval_dataset_names:
@@ -48,7 +48,7 @@ def evaluate(model=None,tokenizer=None,training_args={}):
         with torch.no_grad():
             responses = get_model_responses(model, tokenizer, querys,val_set_name,training_args)
             metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",val_set_name,references=None,verbose=False)
-            reward_utils.save_results(output_dir, metrics, questions[:len(responses)], responses,reward_types, f"sft_{step}_actlayer{act_layer}_gpt35")
+            reward_utils.save_results(output_dir, metrics, questions[:len(responses)], responses,reward_types, f"sft_{step}_{act_layer}_gpt35")
         print(metrics)
     
 from lora_attribute.args import (

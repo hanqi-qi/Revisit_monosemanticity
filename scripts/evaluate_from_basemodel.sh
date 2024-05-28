@@ -41,4 +41,4 @@ python evaluate_from_ckpt.py \
 --report_to "wandb" \
 
 
-#dataset_name: 'wiki2_nontoxic_paired_data'/hh_rlhf_helpful_paired_data/cog_reframe_positive_paired_data/challenge_toxicity
+#dataset_name: 'wiki2_nontoxic_paired_data'/hh_rlhf_helpful_paired_data/cog_reframe_positive_paired_data/challenge_toxicity/sycophancy_ab_paired_data

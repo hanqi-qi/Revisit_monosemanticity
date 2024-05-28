@@ -1,10 +1,10 @@
 #!/bin/bash
 python evaluate_from_ckpt.py \
 --model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf" \
---policy_paths "/scratch/prj/lmrep/hanqi/attribute_edit/results/single_sft_customised_trl_actlayers_25-31/cog_reframe_positive_paired_data/checkpoint-100" \
---act_layer "2" \
---dataset_name 'cog_reframe_positive_paired_data' \
---eval_dataset 'cog_reframe_positive_paired_data' \
+--policy_paths "/scratch/prj/lmrep/hanqi/attribute_edit/results/single_sycophancy_ab_paired_data_customised_trl_baseline/sycophancy_ab_paired_data/checkpoint-140" \
+--act_layer "None" \
+--dataset_name 'sycophancy_ab_paired_data' \
+--eval_dataset 'sycophancy_ab_paired_data' \
 --reward_types 'alignment' \
 --user_tag '[INST]' \
 --assistant_tag 'Thought:' \
@@ -24,7 +24,7 @@ python evaluate_from_ckpt.py \
 --evaluate_nums 200 \
 --reference_free False \
 --per_device_train_batch_size 16 \
---per_device_eval_batch_size 16 \
+--per_device_eval_batch_size 32 \
 --gradient_accumulation_steps 1 \
 --evaluation_strategy "steps" \
 --eval_steps 500  \

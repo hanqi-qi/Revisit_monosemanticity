@@ -52,7 +52,8 @@ chat_template_dict = {
     "cog_reframe_positive_paired_data":uni_template, 
     "wiki2_nontoxic_paired_data":uni_template,
     "hh_rlhf_helpful_paired_data":uni_template,
-    "challenge_toxicity":continue_template
+    "challenge_toxicity":continue_template,
+    "sycophancy_ab_paired_data":continue_template
 }
 
 
