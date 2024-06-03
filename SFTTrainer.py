@@ -60,10 +60,11 @@ class CustomSFTrainer(SFTTrainer):
         tmp_sparse_loss = 0
         for act_nlayer in fea_hooks["mlp.up_proj"]:
             tmp_sparse_loss += torch.mean(torch.sum(torch.abs(act_nlayer.fea[:,-1,:]), dim=-1),dim=0)
+            # tmp_sparse_loss += torch.mean(torch.var(act_nlayer.fea[:,-1,:], dim=-1),dim=0)
         return tmp_sparse_loss/len(fea_hooks["mlp.up_proj"])
     
     def compute_loss(self, model, inputs,return_outputs=False):
-        fea_hooks = get_feas_by_hook(model,target_acts=["mlp.up_proj"],target_layers=[31])
+        fea_hooks = get_feas_by_hook(model,target_acts=["mlp.up_proj"],target_layers=self.act_layers)
         outputs = model(**inputs)
         sft_loss = outputs.get("loss")
         sparsity_loss = self.sparisty_loss(fea_hooks)

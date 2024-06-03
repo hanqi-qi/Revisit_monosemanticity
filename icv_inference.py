@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import copy
 from tqdm import tqdm
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 
 from utils.common import setup_env
@@ -81,7 +81,7 @@ if args.generate_woICV == "True":
     
     responses = []
     try: 
-        for qid,query in enumerate(querys):
+        for query in tqdm(querys):
             prompt = prompt_template.format(instruction=query,response="")
             query_prompt = tokenizer(prompt)
             # query_prompt = prepare_prompt_query(tokenizer,query,gold_ans["neg_inputs"][qid],args.dataset,args.prompt_type)
@@ -91,7 +91,8 @@ if args.generate_woICV == "True":
     except KeyboardInterrupt:
         num_responses = len(responses)
         print("exit! but save files")
-        reward_utils.save_results(output_dir, demo, querys[:num_responses], responses, args.reward_types, f"ICL_baseline_withAtt")
+        reward_utils.save_results(output_dir, {}, querys[:len(responses)], responses,args.reward_types, f"ICL_baseline")
+        # reward_utils.save_results(output_dir, demo, querys[:num_responses], responses, args.reward_types, f"ICL_baseline_withAtt")
         # reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)
     reward_utils.save_results(output_dir, demo, querys, responses, args.reward_types, f"ICL_baseline_withAtt")
     # reward_results = reward_utils.mulreward_evaluate(querys,responses,args.reward_types,device)

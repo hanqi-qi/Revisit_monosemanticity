@@ -44,10 +44,12 @@ def clean_text(responses):
 def evaluate(reward_types=None, evaluate_nums = 200,bsz=32, **kwargs):
     torch.cuda.empty_cache()
     with torch.no_grad():
-        content = pd.read_csv("/scratch/prj/lmrep/hanqi/attribute_edit/results/Llama-2-7b-chat-hf/challenge_toxicity/sft_Init_gpt35.csv")
+        content = pd.read_csv("/scratch/prj/lmrep/hanqi/attribute_edit/results/llama-2-7b/sycophancy_philpapers2020_paired_data/ICL_baseline_withAtt.csv")
+        _,gold_answers,_ = load_queries("sycophancy_philpapers2020_paired_data",split="valid")
         querys = content["querys"]
         responses = content["responses"]
-        metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0","challenge_toxicity",references=None,verbose=False)
+        references = gold_answers["pos_inputs"] 
+        metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0","sycophancy_ab_paired_data",references=references,verbose=False)
     print(metrics)
 
 

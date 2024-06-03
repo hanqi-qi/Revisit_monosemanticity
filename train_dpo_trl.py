@@ -15,14 +15,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import time
 from trl import DPOTrainer, SFTTrainer
 from trl.import_utils import is_npu_available, is_xpu_available
 from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from transformers.integrations import WandbCallback
 import logging
-from CustomerTrainer import CustomTrainer
 
 from typing import Dict, Optional, Sequence
 
@@ -180,32 +179,7 @@ def train():
                 max_prompt_length=128,
                 max_length=256,
                 loss_type='sigmoid',
-            )
-    elif training_args.train_schema == "sft":
-
-        def formatting_prompts_func(example):
-            output_texts = []
-            for i in range(len(example['prompt'])):
-                text = uni_template.format(instruction=example['prompt'][i], response=example['chosen'][i])
-                output_texts.append(text)
-            return output_texts
-        # response_template = "[/INST]"
-        # collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
-        trainer = SFTTrainer(
-            model=policy_model,
-            train_dataset=train_data,
-            peft_config=lora_config,
-            eval_dataset=eval_data,
-            packing=False,
-            max_seq_length=256,
-            tokenizer=tokenizer,
-            args=training_args,
-            formatting_func=formatting_prompts_func,
         )
-        
-        trainer = CustomTrainer(
-        model=policy_model, tokenizer=tokenizer, args=training_args, train_dataset=train_data
-    )
         
     policy_model.config.use_cache = False
     # Instantiate the new logging callback, passing it the Trainer object

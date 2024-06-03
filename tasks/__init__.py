@@ -10,6 +10,8 @@ task_mapper = {
     'cog_reframe_positive_paired_data': DemoProbInferenceForStyle,
     "wiki2_nontoxic_paired_data":DemoProbInferenceForStyle,
     'sycophancy_ab_paired_data': DemoProbInferenceForStyle,
+    "sycophancy_philpapers2020_paired_data":DemoProbInferenceForStyle,
+    "3H_paired_data":DemoProbInferenceForStyle,
 }
 
 

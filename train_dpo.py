@@ -15,31 +15,30 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import time
+from trl import DPOTrainer, SFTTrainer
+from trl.import_utils import is_npu_available, is_xpu_available
+from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from transformers.integrations import WandbCallback
 import logging
-import pathlib
-import typing
+from DPOTrainer import CustomDPOTrainer
 
-import json
-import gc
 from typing import Dict, Optional, Sequence
 
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 import transformers
 from transformers import Trainer, BitsAndBytesConfig
 import torch
-from models.model_generate import model_generate_once
+from models.model_utils import disable_dropout
 from models.llama_hook import get_feas_by_hook
-from utils.prompt import hf_template_dict, chat_template_dict, hf_split_tag, chat_split_tag
+from utils.prompt import hf_template_dict, chat_template_dict, hf_split_tag, uni_template
 from lora_attribute.train_val_datasets import AlpacaSupervisedDataset
-from test_examples import load_queries
+from test_examples import load_queries, load_dpo_dataset
 import pickle
 import wandb
 #load model utils
 from models.model_utils import load_local_policy
-from CustomerTrainer import CustomTrainer
 from lora_attribute.args import (
     ModelArguments,
     TrainingArguments, 
@@ -92,9 +91,9 @@ def train():
 
     #define prompt_template, etc
     model_signature = model_args.model_name_or_path.split("/")[-1]
-    training_args.prompt_template_dict = chat_template_dict if "chat" in model_signature else hf_template_dict
-    training_args.prompt_template = training_args.prompt_template_dict[training_args.dataset_name]
-    training_args.split_tag = chat_split_tag[training_args.dataset_name] if "chat" in model_signature else hf_split_tag[training_args.dataset_name]
+    prompt_template_dict = chat_template_dict if "chat" in model_signature else hf_template_dict
+    training_args.prompt_template = prompt_template_dict[training_args.dataset_name] if training_args.dataset_name!="all_paired_data" else uni_template
+    training_args.split_tag = "[/INST]" if "chat" in model_signature else hf_split_tag[training_args.dataset_name]
     
     wandb.init(
         mode="disabled",
@@ -179,10 +178,20 @@ def train():
         tokenizer.pad_token = tokenizer.unk_token
         print("Policy model Loaded!")
 
-    train_dataset = AlpacaSupervisedDataset(tokenizer=tokenizer, num_examples=99999, lorra_args=lorra_args,training_args=training_args)
-    trainer = CustomTrainer(
-        model=policy_model, tokenizer=tokenizer, args=training_args, train_dataset=train_dataset
+    train_data, eval_data = load_dpo_dataset(training_args.dataset_name)
+
+    trainer = CustomDPOTrainer(
+        model=policy_model,
+        train_dataset=train_data,
+        eval_dataset=eval_data,
+        beta=0.1,
+        max_prompt_length=128,
+        tokenizer=tokenizer,
+        max_length=256,
+        args = training_args,
+        loss_type='sigmoid',
     )
+        
     policy_model.config.use_cache = False
     # Instantiate the new logging callback, passing it the Trainer object
     evals_callback = WandbCallback()
@@ -195,19 +204,19 @@ def train():
                 control.should_evaluate = True
 
     trainer.add_callback(EvaluateFirstStepCallback())
-    if training_args.do_eval:
-        print("Load Untrained policy model and Evaluate at the begining")
+    if training_args.policy_paths is not None:
+        print("Load pretrained policy model and Evaluate")
         trainer.evaluate()
-    # else:
-    print("Begin to train")
-    trainer.train()
-    trainer.save_state()
+    else:
+        print(f"Begin to train with {training_args.train_schema} schema")
+        trainer.train()
+        trainer.save_state()
 
-    if training_args.local_rank == 0:
-        policy_model.save_pretrained("/scratch/prj/lmrep/hanqi/attribute_edit/results/poliy_path/") # saving adapter
-        merged_model = policy_model.merge_and_unload() # saving full model
-        merged_model.save_pretrained(training_args.output_dir)
-        tokenizer.save_pretrained("/scratch/prj/lmrep/hanqi/attribute_edit/results/poliy_path/")
+        if training_args.local_rank == 0:
+            policy_model.save_pretrained("/scratch/prj/lmrep/hanqi/attribute_edit/results/poliy_path/") # saving adapter
+            # merged_model = policy_model.merge_and_unload() # saving full model
+            # merged_model.save_pretrained(training_args.output_dir)
+            tokenizer.save_pretrained("/scratch/prj/lmrep/hanqi/attribute_edit/results/poliy_path/")
 
 if __name__ == "__main__":
     train()

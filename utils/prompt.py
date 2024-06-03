@@ -53,7 +53,9 @@ chat_template_dict = {
     "wiki2_nontoxic_paired_data":uni_template,
     "hh_rlhf_helpful_paired_data":uni_template,
     "challenge_toxicity":continue_template,
-    "sycophancy_ab_paired_data":continue_template
+    "sycophancy_ab_paired_data":continue_template,
+    "sycophancy_philpapers2020_paired_data":continue_template,
+    "3H_paired_data":continue_template,
 }
 
 
@@ -62,4 +64,4 @@ dataset_dict = {"wiki2_nontoxic_paired_data":0,"cog_reframe_positive_paired_data
 attri_dict = {"pos_type":["non-toxic","postive","helpful"],"neg_type":["toxic","negative","useless"]}#can be extended to more key words in pos_type and neg_type
 
 hf_split_tag = {"cog_reframe_positive_paired_data":"Thought:", "wiki2_nontoxic_paired_data":"Output:", "hh_rlhf_helpful_paired_data":"Response:"}
-chat_split_tag = {'cog_reframe_positive_paired_data':"[/INST]", 'wiki2_nontoxic_paired_data':"[/INST]", 'hh_rlhf_helpful_paired_data':"[/INST]",'challenge_toxicity':"[/INST]"}
+chat_split_tag = {'cog_reframe_positive_paired_data':"[/INST]", 'wiki2_nontoxic_paired_data':"[/INST]", 'hh_rlhf_helpful_paired_data':"[/INST]",'challenge_toxicity':"[/INST]","sycophancy_philpapers2020_paired_data":"[/INST]"}

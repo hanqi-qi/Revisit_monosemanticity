@@ -91,7 +91,7 @@ class TrainingArguments(transformers.TrainingArguments):
     )
     
     sparse_lambda: float = field(
-        default = 0.0,
+        default = 0.0001,
         metadata={"help": "Sparsity lambda"}
     )
     

@@ -23,7 +23,7 @@ python evaluate_from_ckpt.py \
 --evaluate_nums 200 \
 --reference_free False \
 --per_device_train_batch_size 16 \
---per_device_eval_batch_size 32 \
+--per_device_eval_batch_size 16 \
 --gradient_accumulation_steps 1 \
 --evaluation_strategy "steps" \
 --eval_steps 500  \
@@ -41,4 +41,4 @@ python evaluate_from_ckpt.py \
 --report_to "wandb" \
 
 
-#dataset_name: 'wiki2_nontoxic_paired_data'/hh_rlhf_helpful_paired_data/cog_reframe_positive_paired_data/challenge_toxicity/sycophancy_ab_paired_data
+#dataset_name: 'wiki2_nontoxic_paired_data'/hh_rlhf_helpful_paired_data/cog_reframe_positive_paired_data/challenge_toxicity/sycophancy_ab_paired_data/sycophancy_philpapers2020_paired_data

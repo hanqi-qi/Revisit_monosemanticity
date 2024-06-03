@@ -44,11 +44,12 @@ def evaluate(model=None,tokenizer=None,training_args={}):
     for val_set_name in eval_dataset_names:
         questions, answers, labels = load_queries(val_set_name,split="valid")
         querys = questions[:evaluate_nums] 
+        reference = answers["pos_inputs"] if "sycophancy" in val_set_name else None
         print(f'Evaluating {val_set_name} on {len(querys)} samples with {bsz} BSZ...')
         with torch.no_grad():
             responses = get_model_responses(model, tokenizer, querys,val_set_name,training_args)
-            metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",val_set_name,references=None,verbose=False)
-            reward_utils.save_results(output_dir, metrics, questions[:len(responses)], responses,reward_types, f"sft_{step}_{act_layer}_gpt35")
+            metrics = reward_utils.mulreward_evaluate(querys,responses,reward_types,"cuda:0",val_set_name,references=reference,verbose=False)
+            reward_utils.save_results(output_dir, metrics, questions[:len(responses)], responses,reward_types, f"dpo_{step}_{act_layer}_gpt35")
         print(metrics)
     
 from lora_attribute.args import (

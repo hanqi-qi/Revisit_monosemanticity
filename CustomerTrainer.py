@@ -256,7 +256,7 @@ def dpo_loss_fn(
     ref_logratios = ref_pos_logps - ref_neg_logps
 
     # if reference_free:
-    ref_logratios = 0
+    # ref_logratios = 0
 
     logits = pi_logratios - ref_logratios
 

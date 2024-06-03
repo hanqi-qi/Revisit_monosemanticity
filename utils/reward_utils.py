@@ -121,9 +121,9 @@ class AutoEvaluator:
             else:
                 score = {"label":"gpt35-turbo","score":0.0}
             scores.append(score) 
-            # print("Input_prompt",input_prompt)
-            # print("GPT35-evaluation",reply)
-            # print(score)
+        print("Input_prompt",input_prompt)
+        print("GPT35-evaluation",reply)
+        print(score)
         return scores 
     
     
@@ -149,10 +149,16 @@ class Tokenizer:
     
 def save_results(output_dir,metrics,querys, responses, reward_types, variant):
     filename = f"{output_dir}/{variant}.csv"
-    metric_key= list(metrics.keys())[0]
-    assert len(querys) == len(responses) == len(metrics[metric_key])
+    # if metrics == {}:
+    print("No metrics to save!")
     querys = querys.tolist() if type(querys) is not list else querys
-    result = pd.DataFrame({"querys":querys,"responses":responses,"scores":metrics[metric_key]})
+    assert len(querys) == len(responses)
+    result = pd.DataFrame({"querys":querys,"responses":responses})
+    # else:
+    #     metric_key= list(metrics.keys())[0]
+    #     assert len(querys) == len(responses) == len(metrics[metric_key])
+    #     querys = querys.tolist() if type(querys) is not list else querys
+    #     result = pd.DataFrame({"querys":querys,"responses":responses,"scores":metrics[metric_key]})
     result.to_csv(filename)
     # with open(f"{filename}", "w") as outfile: 
     #     json.dump(results, outfile)
@@ -250,7 +256,7 @@ def mulreward_evaluate(querys,responses,reward_types,device,dataset_name="cog_re
             #querys here is another response we wanna compare with
             if references is not None:
                 task = "paraphrase_reference"
-                references = references["pos_inputs"]
+                references = references
             else:
                 task = "paraphrase_AB"
             scores.append(reward_pipe.get_scores(querys,responses,relation="preliminary",task=task,dataset_name=dataset_name,references=references))

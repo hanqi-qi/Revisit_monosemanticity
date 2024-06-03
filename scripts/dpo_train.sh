@@ -1,9 +1,9 @@
 #!/bin/bash
 
-python train_dpo.py \
+python train_dpo_v1.py \
 --model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf" \
---dataset_name 'hh_rlhf_helpful_paired_data' \
---eval_dataset 'hh_rlhf_helpful_paired_data' \
+--dataset_name 'cog_reframe_positive_paired_data' \
+--eval_dataset 'cog_reframe_positive_paired_data' \
 --reward_types 'alignment' \
 --use_label 'False' \
 --user_tag '[INST]' \
@@ -18,18 +18,18 @@ python train_dpo.py \
 --lora_r 8 \
 --lora_alpha 16 \
 --lora_dropout 0.05 \
---output_dir ./results/single_dpo/hh_helpful \
+--output_dir ./results/single_dpo_v1/cog_reframe_positive_paired_data \
 --overwrite_output_dir \
 --num_train_epochs 50 \
 --bf16 True \
 --evaluate_nums 200 \
---per_device_train_batch_size 8 \
+--per_device_train_batch_size 16 \
 --per_device_eval_batch_size 16 \
 --gradient_accumulation_steps 1 \
 --evaluation_strategy "steps" \
 --eval_steps 50  \
 --save_strategy "steps" \
---save_steps 150 \
+--save_steps 50 \
 --learning_rate 3e-4 \
 --weight_decay 0. \
 --lr_scheduler_type "constant" \

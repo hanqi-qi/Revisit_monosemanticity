@@ -1,17 +1,17 @@
 #!/bin/bash
 python evaluate_from_ckpt.py \
 --model_name_or_path  "/scratch/prj/lmrep/llama2_model/Llama-2-7b-chat-hf" \
---policy_paths "/scratch/prj/lmrep/hanqi/attribute_edit/results/single_sycophancy_ab_paired_data_customised_trl_baseline/sycophancy_ab_paired_data/checkpoint-140" \
+--policy_paths "/scratch/prj/lmrep/hanqi/attribute_edit/results/single_dpo_customised_wSparsity_act20_dia/cog_reframe_positive_paired_data/checkpoint-20" \
 --act_layer "None" \
---dataset_name 'sycophancy_ab_paired_data' \
---eval_dataset 'sycophancy_ab_paired_data' \
+--dataset_name 'cog_reframe_positive_paired_data' \
+--eval_dataset 'cog_reframe_positive_paired_data' \
 --reward_types 'alignment' \
 --user_tag '[INST]' \
 --assistant_tag 'Thought:' \
 --pos_type 'a positive' \
 --neg_type 'a negative' \
 --control_template "Give {type} answer." \
---target_layers "10,12,14,16,18,20" \
+--target_layers "18,20,22,24,26,28,30" \
 --lorra_alpha 5 \
 --lorra_beta 0 \
 --lora_r 8 \
@@ -23,8 +23,8 @@ python evaluate_from_ckpt.py \
 --bf16 True \
 --evaluate_nums 200 \
 --reference_free False \
---per_device_train_batch_size 16 \
---per_device_eval_batch_size 32 \
+--per_device_train_batch_size 8 \
+--per_device_eval_batch_size 8 \
 --gradient_accumulation_steps 1 \
 --evaluation_strategy "steps" \
 --eval_steps 500  \

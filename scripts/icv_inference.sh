@@ -1,9 +1,9 @@
 python3 icv_inference.py \
---dataset sycophancy_ab_paired_data \
+--dataset 3H_paired_data \
 --model_type llama-2 \
 --model_size "7b" \
 --start_id 0 \
---end_id 60 \
+--end_id 200 \
 --prompt_type default \
 --reward_types None \
 --generate_woICV True \
