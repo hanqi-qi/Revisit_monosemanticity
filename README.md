@@ -34,14 +34,14 @@ For Figure 2, The processed data statistics files for all LLMs, are located in t
 
 **1. Obtain Statistics For each Model**
 
-    cd PlotFigure/Figure2
+    cd Figure2
     
     python save_weight_statistics.py --model_name 'GPT2-medium'
     
 
 **2. Plot**
 
-    cd PlotFigure/Figure2
+    cd Figure2
     
     python weight_stats.py
 
@@ -51,14 +51,14 @@ For Figure 3, The processed data statistics files for all LLMs, are located in t
 
 **1. Obtain Relative Changes For each Model**
 
-    cd PlotFigure/Figure3
+    cd Figure3
     
     python ComputDiff.py --model_name "GPT2-medium" --dpo_path "dpo.pt"
 
 
 **2. Plot**
 
-    cd PlotFigure/Figure3
+    cd Figure3
 
     python weight_stats.py
 
@@ -66,3 +66,5 @@ For Figure 3, The processed data statistics files for all LLMs, are located in t
 ## DecPO increases the FD, comparing to DPO (better than base model)
 
 We firstly extract the activations using hook from llama models (base, DPO and DecPO), then calculate the decorrelation (1-cosSimi).
+    cd feature_decorr
+    python extract_acts.py
