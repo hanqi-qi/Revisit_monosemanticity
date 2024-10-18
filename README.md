@@ -67,5 +67,6 @@ For Figure 3, The processed data statistics files for all LLMs, are located in t
 
 We firstly extract the activations using hook from llama models (base, DPO and DecPO), then calculate the decorrelation (1-cosSimi).
 **extract activations**
+
     cd feature_decorr
     python extract_acts.py
