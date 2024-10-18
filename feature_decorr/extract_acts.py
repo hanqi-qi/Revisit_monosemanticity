@@ -58,7 +58,7 @@ def extract_tokenSimi(dataset,model_type,step):
     elif dataset == "cog_reframe_positive_paired_data":
         dpo_paths = "dpo_baseline/llama2hf/cog_reframe_positive_paired_data/checkpoint-20/"
     elif dataset == "sycophancy_ab_paired_data":
-        dpo_paths = "/scratch/prj/lmrep/hanqi/attribute_edit/results/single_dpo_baseline/llama2hf/sycophancy_ab_paired_data/checkpoint-20/"
+        dpo_paths = "dpo_baseline/llama2hf/sycophancy_ab_paired_data/checkpoint-20/"
         prompts, gold_ans, labels = load_queries(dataset,split="valid")
 
 
