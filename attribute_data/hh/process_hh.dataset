@@ -1,3 +1,0 @@
-import json
-
-data = json.loads("/scratch/prj/lmrep/hanqi/attribute_edit/attribute_data/hh/hh_test_sbert_demos/helpful_base.json)
