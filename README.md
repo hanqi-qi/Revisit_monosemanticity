@@ -1,8 +1,12 @@
-# The code for plotting figure 2 and figure 3
+# Encourage or Inhibit Monosemanticity? Revisit Monosemanticity from a Feature Decorrelation Perspective
+EMNLP24:[Encourage or Inhibit Monosemanticity? Revisit Monosemanticity from a Feature Decorrelation Perspective](https://arxiv.org/pdf/2406.17969)
+
+In this work, we study the mechanistic interpretability in neuron-level, i.e.,Monosemanticity. We empirically demonstrate that monosemanticity consistently exhibits a positive correlation with model capacity, in the preference alignment process. And provide theoretical justification in section 3.2.
+
 
 ## File Organization
 ```
-PlotFigure
+Revisit_monosemanticity
 |-- Figure2                                          # Contains all files related to plotting Figure 2.
 |   |-- weight_statistics_Fig2                       # The folder contains the statistics file for each model.            
     |   |-- GPT-J(6B).npy                            # The folder contains the statistics file for GPT-J.
@@ -15,6 +19,9 @@ PlotFigure
     |   |-- ...
 |   |-- weight_stats.py                              # The file contains the code for plotting.
 |   |-- ComputDiff.py                                # Compute the relative change of normalized median (||w_in||^2 b_in) after an LLM trained with DPO.
+|--feature_decorr (figure4 and figure5)
+|   |--extract_acts.py
+|   |--vis_results.ipynb
 |-- requirements.txt                                 # Python environment file.
 
 ```
