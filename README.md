@@ -1,8 +1,7 @@
-# Encourage or Inhibit Monosemanticity? Revisit Monosemanticity from a Feature Decorrelation Perspective
+# Revisit Monosemanticity from a Feature Decorrelation Perspective
 EMNLP24:[Encourage or Inhibit Monosemanticity? Revisit Monosemanticity from a Feature Decorrelation Perspective](https://arxiv.org/pdf/2406.17969)
 
 In this work, we study the mechanistic interpretability in neuron-level, i.e.,Monosemanticity. We empirically demonstrate that monosemanticity consistently exhibits a positive correlation with model capacity, in the preference alignment process. And provide theoretical justification in section 3.2.
-
 
 ## File Organization
 ```
