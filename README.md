@@ -1,6 +1,13 @@
-# The code for plotting figure 2 and figure 3
+# Revisit Monosemanticity from a Feature Decorrelation Perspective
+EMNLP24:[Encourage or Inhibit Monosemanticity? Revisit Monosemanticity from a Feature Decorrelation Perspective](https://arxiv.org/pdf/2406.17969)
 
-## File Organization
+
+In this work, we study the mechanistic interpretability in neuron-level, i.e.,Monosemanticity via feature decorrelation(FD) perspective. 
+- We firstly provide theoretical justification in section 3.2. 
+- We then empirically demonstrate that monosemanticity consistently exhibits a positive correlation with model capacity, in the preference alignment process. 
+- We propose DecPO to increase the monosemanticity and further improve DPO via increase reward margin.
+
+### File Organization
 ```
 PlotFigure
 |-- Figure2                                          # Contains all files related to plotting Figure 2.
@@ -15,10 +22,13 @@ PlotFigure
     |   |-- ...
 |   |-- weight_stats.py                              # The file contains the code for plotting.
 |   |-- ComputDiff.py                                # Compute the relative change of normalized median (||w_in||^2 b_in) after an LLM trained with DPO.
+|--feature_decorr (figure4 and figure5)
+|   |--extract_acts.py
+|   |--vis_results.ipynb
 |-- requirements.txt                                 # Python environment file.
 
 ```
-## Monosemanticity is not consistent with model size (Figure2)
+### Monosemanticity is not consistent with model size (Figure2)
 
 For Figure 2, The processed data statistics files for all LLMs, are located in the "weight_statistics_Fig2" folder. Here is the link to download it: [link](https://drive.google.com/file/d/1bC9IKy90gwYbIUWrvjUruqkt9-hJ5YFG/view?usp=drive_link)
 
@@ -35,7 +45,7 @@ For Figure 2, The processed data statistics files for all LLMs, are located in t
     
     python weight_stats.py
 
-## DPO-trained models have larger monosemanticity (Figure3), especially in early layers
+### DPO-trained models have larger monosemanticity (Figure3), especially in early layers
 
 For Figure 3, The processed data statistics files for all LLMs, are located in the "weight_statistics_Fig3" folder. Here is the link to download it: [link](https://drive.google.com/file/d/1MwxHvNvbCujgHRcnNIS-9cBJdGkNUWKw/view?usp=drive_link)
 
@@ -53,6 +63,6 @@ For Figure 3, The processed data statistics files for all LLMs, are located in t
     python weight_stats.py
 
 
-## Figure 4 and Figure 5 (Feature Decorrelation)
+## DecPO increases the FD, comparing to DPO (better than base model)
 
-We firstly extract the activations using hook from llama models, then calculate the decorrelation (1-cosSimi).
+We firstly extract the activations using hook from llama models (base, DPO and DecPO), then calculate the decorrelation (1-cosSimi).
